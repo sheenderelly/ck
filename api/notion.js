@@ -11,11 +11,6 @@ const DATABASES = {
   payments: "2ef0e47d803380479270ee1b1d807815",
 };
 
-const ALLOWED_ORIGINS = [
-  "https://ck-pasaubuy.vercel.app",
-  "https://sheenderelly.github.io",
-];
-
 function readText(rich) {
   return (rich ?? []).map((t) => t.plain_text).join("");
 }
@@ -75,15 +70,7 @@ function plainValue(prop) {
 }
 
 export default async function handler(req, res) {
-  const origin = req.headers.origin;
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-    res.setHeader("Vary", "Origin");
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Portal-Token");
-
-  if (req.method === "OPTIONS") return res.status(204).end();
+  // No CORS headers: the portal is served from this same Vercel deployment.
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
   if (!process.env.NOTION_API_KEY || !process.env.PORTAL_TOKEN) {

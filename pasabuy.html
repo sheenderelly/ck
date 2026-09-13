@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PasaBuy — sheen.dev</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <style>
+    .login-shell {
+      display: flex;
+      justify-content: center;
+      padding: 4rem 0;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .login-card h2 { margin-bottom: 0.25rem; }
+
+    .login-card .hint {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: var(--spacing-tight);
+    }
+
+    .login-card label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.4rem;
+    }
+
+    .login-card input {
+      width: 100%;
+      padding: 0.6rem 0.7rem;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      font-size: 0.95rem;
+    }
+
+    .login-card input:focus { outline: none; border-color: var(--accent); }
+
+    .form-msg {
+      color: var(--error);
+      font-size: 0.8rem;
+      min-height: 1.1rem;
+      margin-top: 0.6rem;
+    }
+
+    .record-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-tight);
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-tight);
+    }
+
+    .record-count { color: var(--text-muted); font-size: 0.8rem; }
+
+    .table-scroll {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+    }
+
+    .record-table { width: 100%; border-collapse: collapse; }
+
+    .record-table th,
+    .record-table td {
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      font-size: 0.85rem;
+    }
+
+    .record-table th {
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+    }
+
+    .record-table tbody tr:last-child td { border-bottom: none; }
+    .record-table tbody tr:hover { background: var(--bg-elevated); }
+    .record-table a { color: var(--link); }
+
+    .state-msg {
+      padding: 2.5rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+    }
+
+    .state-msg.is-error { color: var(--error); border-color: var(--error); }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="app-header-inner">
+      <div class="brand-mark">
+        <i data-lucide="package"></i>
+        <div>
+          <div class="brand-title">PasaBuy</div>
+          <div class="brand-sub">sheen.dev</div>
+        </div>
+      </div>
+      <div class="theme-switch" role="group" aria-label="Theme toggle">
+        <button id="theme-dark" class="active" type="button"><i data-lucide="moon"></i> Dark</button>
+        <button id="theme-light" type="button"><i data-lucide="sun"></i> Light</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Login -->
+    <div id="login-view" class="view-hidden">
+      <div class="login-shell">
+        <form class="panel login-card" id="login-form">
+          <h2>Locked</h2>
+          <div class="hint">Enter the portal password to continue.</div>
+          <label for="pw">Password</label>
+          <input id="pw" type="password" autocomplete="current-password" required>
+          <div class="form-msg" id="login-msg"></div>
+          <button class="btn btn-primary" id="login-btn" type="submit">Unlock</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Landing -->
+    <div id="menu-view" class="tools-menu view-hidden">
+      <h2>PasaBuy</h2>
+      <div class="tools-grid">
+        <div class="panel tool-card" data-db="clients" data-label="Clients">
+          <div class="tool-icon">客</div>
+          <div class="tool-details">
+            <h3>Clients</h3>
+            <p>Customer records and contact details.</p>
+          </div>
+        </div>
+        <div class="panel tool-card" data-db="invoices" data-label="Orders">
+          <div class="tool-icon">注</div>
+          <div class="tool-details">
+            <h3>Orders</h3>
+            <p>Invoices and their current status.</p>
+          </div>
+        </div>
+        <div class="panel tool-card" data-db="products" data-label="Products">
+          <div class="tool-icon">品</div>
+          <div class="tool-details">
+            <h3>Products</h3>
+            <p>Catalog of items available to order.</p>
+          </div>
+        </div>
+        <div class="panel tool-card" data-db="pricebook" data-label="Pricebook">
+          <div class="tool-icon">¥</div>
+          <div class="tool-details">
+            <h3>Pricebook</h3>
+            <p>Pricing entries per product.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Records -->
+    <div id="record-view" class="tool-view view-hidden">
+      <div class="view-header">
+        <button class="back-btn" id="back-btn"><i data-lucide="arrow-left"></i> Back</button>
+        <h2 id="record-title">Records</h2>
+      </div>
+      <div class="tool-body">
+        <div class="record-toolbar">
+          <div class="record-count" id="record-count"></div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" id="refresh-btn">Refresh</button>
+            <button class="btn btn-ghost" id="logout-btn">Log out</button>
+          </div>
+        </div>
+        <div id="record-body"><div class="state-msg">Loading…</div></div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const API_URL = "/api/notion";
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) =>
+      String(v).replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+      );
+
+    let token = sessionStorage.getItem("pasabuy_token");
+    let currentDb = null;
+
+    /* ---- theme (shares the key used by the DevTools page) ---- */
+    function applyTheme(mode) {
+      document.documentElement.setAttribute("data-theme", mode);
+      $("theme-dark").classList.toggle("active", mode === "dark");
+      $("theme-light").classList.toggle("active", mode === "light");
+      try { localStorage.setItem("sheen-theme", mode); } catch (e) {}
+    }
+    $("theme-dark").addEventListener("click", () => applyTheme("dark"));
+    $("theme-light").addEventListener("click", () => applyTheme("light"));
+    try { applyTheme(localStorage.getItem("sheen-theme") || "dark"); } catch (e) { applyTheme("dark"); }
+
+    /* ---- view switching ---- */
+    function show(id) {
+      ["login-view", "menu-view", "record-view"].forEach((v) => {
+        $(v).classList.toggle("view-active", v === id);
+        $(v).classList.toggle("view-hidden", v !== id);
+      });
+    }
+
+    /* ---- data ---- */
+    async function fetchDb(db, tok) {
+      const res = await fetch(`${API_URL}?db=${encodeURIComponent(db)}`, {
+        headers: { "X-Portal-Token": tok },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const err = new Error(body.error || `Request failed (${res.status})`);
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    }
+
+    function renderTable(data) {
+      if (!data.records.length) {
+        $("record-body").innerHTML = '<div class="state-msg">No records in this database.</div>';
+        return;
+      }
+      const cols = data.columns;
+      const head = cols.map((c) => `<th>${esc(c)}</th>`).join("");
+      const rows = data.records
+        .map((r) => {
+          const cells = cols
+            .map((c) => {
+              const v = r.fields[c] ?? "";
+              return `<td>${v === "" ? "—" : esc(v)}</td>`;
+            })
+            .join("");
+          return `<tr>${cells}<td><a href="${esc(r.url)}" target="_blank" rel="noopener">Notion ↗</a></td></tr>`;
+        })
+        .join("");
+      $("record-body").innerHTML =
+        `<div class="table-scroll"><table class="record-table">` +
+        `<thead><tr>${head}<th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+
+    function lock(message) {
+      sessionStorage.removeItem("pasabuy_token");
+      token = null;
+      $("pw").value = "";
+      $("login-msg").textContent = message || "";
+      show("login-view");
+    }
+
+    async function openDb(db, label) {
+      currentDb = db;
+      $("record-title").textContent = label;
+      $("record-count").textContent = "";
+      $("record-body").innerHTML = '<div class="state-msg">Loading…</div>';
+      show("record-view");
+      try {
+        const data = await fetchDb(db, token);
+        $("record-count").textContent = `${data.count} record${data.count === 1 ? "" : "s"}`;
+        renderTable(data);
+      } catch (err) {
+        if (err.status === 401) return lock("Session expired. Enter the password again.");
+        $("record-body").innerHTML = `<div class="state-msg is-error">${esc(err.message)}</div>`;
+      }
+    }
+
+    /* ---- events ---- */
+    document.querySelectorAll(".tool-card").forEach((card) => {
+      card.addEventListener("click", () => openDb(card.dataset.db, card.dataset.label));
+    });
+
+    $("back-btn").addEventListener("click", () => show("menu-view"));
+    $("refresh-btn").addEventListener("click", () => {
+      const label = $("record-title").textContent;
+      if (currentDb) openDb(currentDb, label);
+    });
+    $("logout-btn").addEventListener("click", () => lock(""));
+
+    $("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pw = $("pw").value;
+      const btn = $("login-btn");
+      $("login-msg").textContent = "";
+      btn.disabled = true;
+      btn.textContent = "Checking…";
+      try {
+        await fetchDb("clients", pw);
+        token = pw;
+        sessionStorage.setItem("pasabuy_token", pw);
+        show("menu-view");
+      } catch (err) {
+        $("login-msg").textContent =
+          err.status === 401 ? "Wrong password." : err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Unlock";
+      }
+    });
+
+    show(token ? "menu-view" : "login-view");
+    if (window.lucide) lucide.createIcons();
+  </script>
+
+</body>
+</html>

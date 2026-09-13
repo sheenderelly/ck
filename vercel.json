@@ -1,6 +1,3 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/portal.html" },
-    { "source": "/devtools", "destination": "/index.html" }
-  ]
+  "cleanUrls": true
 }
