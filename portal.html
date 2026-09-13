@@ -1,489 +1,362 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PasaBuy Portal — Order Management</title>
-  <link rel="stylesheet" href="style.css?v=11">
+  <title>PasaBuy Portal</title>
+  <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg: #0f1115;
+      --surface: #171a21;
+      --surface-2: #1e222b;
+      --border: #2a2f3a;
+      --text: #e6e8ec;
+      --muted: #9aa1ad;
+      --accent: #5b9dff;
+      --danger: #ff6b6b;
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Roboto Mono', monospace;
-      background: var(--bg-primary, #0a0e27);
-      color: var(--text-primary, #e0e0e0);
-      line-height: 1.6;
+      font-family: 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 14px;
     }
 
-    .app-header {
-      background: var(--bg-secondary, #151b2f);
-      border-bottom: 1px solid var(--border, #2a3f5f);
-      padding: 1rem;
-    }
-
-    .app-header-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .brand-mark {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-weight: 600;
-      font-size: 1.2rem;
-    }
-
-    .brand-title {
-      font-weight: 700;
-    }
-
-    .brand-sub {
-      font-size: 0.75rem;
-      opacity: 0.6;
-    }
-
-    .logout-btn {
-      padding: 0.5rem 1rem;
-      background: var(--accent, #ff6b6b);
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 0.9rem;
-    }
-
-    .logout-btn:hover {
-      opacity: 0.9;
-    }
-
-    .login-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
+    /* Login */
+    .login-wrap {
       min-height: 100vh;
-      background: var(--bg-primary, #0a0e27);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
     }
 
     .login-box {
-      background: var(--bg-secondary, #151b2f);
-      padding: 2rem;
-      border-radius: 8px;
-      border: 1px solid var(--border, #2a3f5f);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 28px;
       width: 100%;
-      max-width: 400px;
+      max-width: 380px;
     }
 
-    .login-box h1 {
-      margin-bottom: 1.5rem;
-      text-align: center;
-      font-size: 1.5rem;
-    }
+    .login-box h1 { font-size: 18px; margin-bottom: 4px; }
+    .login-box .sub { color: var(--muted); font-size: 12px; margin-bottom: 20px; }
 
-    .login-box .form-group {
-      margin-bottom: 1rem;
-    }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
 
-    .login-box label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-size: 0.9rem;
-      opacity: 0.8;
-    }
-
-    .login-box input {
+    input[type="password"] {
       width: 100%;
-      padding: 0.75rem;
-      background: var(--bg-primary, #0a0e27);
-      border: 1px solid var(--border, #2a3f5f);
-      color: var(--text-primary, #e0e0e0);
-      border-radius: 4px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
       font-family: inherit;
-      font-size: 1rem;
+      font-size: 14px;
     }
 
-    .login-box input:focus {
-      outline: none;
-      border-color: var(--accent, #ff6b6b);
-    }
+    input[type="password"]:focus { outline: none; border-color: var(--accent); }
 
-    .login-btn {
-      width: 100%;
-      padding: 0.75rem;
-      background: var(--accent, #ff6b6b);
-      color: white;
+    .btn {
+      background: var(--accent);
+      color: #0b1220;
       border: none;
-      border-radius: 4px;
-      cursor: pointer;
+      border-radius: 6px;
+      padding: 10px 14px;
       font-family: inherit;
-      font-size: 1rem;
+      font-size: 14px;
       font-weight: 600;
-      margin-top: 1rem;
+      cursor: pointer;
     }
 
-    .login-btn:hover {
-      opacity: 0.9;
+    .btn:hover { filter: brightness(1.08); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn-full { width: 100%; margin-top: 16px; }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-weight: 400;
     }
 
-    .login-error {
-      color: #ff6b6b;
-      margin-top: 1rem;
-      text-align: center;
-      font-size: 0.9rem;
+    .msg-error {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 12px;
+      min-height: 16px;
     }
 
-    .main-container {
-      max-width: 1200px;
+    /* Portal */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+    }
+
+    .header-inner {
+      max-width: 1280px;
       margin: 0 auto;
-      padding: 2rem 1rem;
-    }
-
-    .nav-tabs {
       display: flex;
-      gap: 1rem;
-      margin-bottom: 2rem;
-      border-bottom: 1px solid var(--border, #2a3f5f);
-      padding-bottom: 1rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
     }
 
-    .nav-tab {
-      padding: 0.5rem 1rem;
+    .brand { font-weight: 700; }
+    .brand small { display: block; font-weight: 400; font-size: 11px; color: var(--muted); }
+
+    main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 48px; }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .tab {
       background: none;
       border: none;
-      color: var(--text-primary, #e0e0e0);
-      cursor: pointer;
-      opacity: 0.6;
-      font-family: inherit;
-      font-size: 0.95rem;
       border-bottom: 2px solid transparent;
+      color: var(--muted);
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
     }
 
-    .nav-tab.active {
-      opacity: 1;
-      border-bottom-color: var(--accent, #ff6b6b);
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
     }
 
-    .nav-tab:hover {
-      opacity: 0.8;
+    .count { color: var(--muted); font-size: 12px; }
+
+    .table-scroll {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
     }
 
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: var(--bg-secondary, #151b2f);
-      border: 1px solid var(--border, #2a3f5f);
-      border-radius: 4px;
-      overflow: hidden;
-    }
+    table { width: 100%; border-collapse: collapse; }
 
-    .data-table th,
-    .data-table td {
-      padding: 1rem;
+    th, td {
       text-align: left;
-      border-bottom: 1px solid var(--border, #2a3f5f);
-      font-size: 0.9rem;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
     }
 
-    .data-table th {
-      background: var(--bg-primary, #0a0e27);
+    th {
+      background: var(--surface-2);
+      font-size: 12px;
       font-weight: 600;
-      opacity: 0.9;
+      color: var(--muted);
+      position: sticky;
+      top: 0;
     }
 
-    .data-table tr:last-child td {
-      border-bottom: none;
-    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(91, 157, 255, .06); }
 
-    .data-table tr:hover {
-      background: rgba(255, 107, 107, 0.05);
-    }
+    td a { color: var(--accent); }
 
-    .loading {
+    .state {
+      padding: 32px;
       text-align: center;
-      padding: 2rem;
-      opacity: 0.6;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
     }
 
-    .error-message {
-      background: rgba(255, 107, 107, 0.1);
-      border: 1px solid #ff6b6b;
-      color: #ff9999;
-      padding: 1rem;
-      border-radius: 4px;
-      margin-bottom: 1rem;
-    }
+    .state.error { color: var(--danger); border-color: var(--danger); }
 
-    @media (max-width: 768px) {
-      .data-table {
-        font-size: 0.85rem;
-      }
-
-      .data-table th,
-      .data-table td {
-        padding: 0.75rem;
-      }
-
-      .main-container {
-        padding: 1rem;
-      }
-    }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- LOGIN VIEW -->
-  <div id="login-view" class="login-container" style="display: none;">
-    <div class="login-box">
+  <div id="login" class="login-wrap hidden">
+    <form class="login-box" id="login-form">
       <h1>PasaBuy Portal</h1>
-      <div class="form-group">
-        <label for="portal-password">Portal Password</label>
-        <input
-          id="portal-password"
-          type="password"
-          placeholder="Enter portal password"
-          autocomplete="off"
-        >
-      </div>
-      <button class="login-btn" onclick="handleLogin()">Login</button>
-      <div id="login-error" class="login-error" style="display: none;"></div>
-    </div>
+      <div class="sub">Enter the portal password to continue.</div>
+      <label for="pw">Password</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <button class="btn btn-full" id="login-btn" type="submit">Unlock</button>
+      <div class="msg-error" id="login-error"></div>
+    </form>
   </div>
 
-  <!-- PORTAL VIEW -->
-  <div id="portal-view" style="display: none;">
-    <header class="app-header">
-      <div class="app-header-inner">
-        <div class="brand-mark">
-          <div>
-            <div class="brand-title">PasaBuy Portal</div>
-            <div class="brand-sub">Order Management</div>
-          </div>
-        </div>
-        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+  <div id="portal" class="hidden">
+    <header>
+      <div class="header-inner">
+        <div class="brand">PasaBuy Portal<small>Notion-backed order management</small></div>
+        <button class="btn btn-ghost" id="logout">Log out</button>
       </div>
     </header>
 
-    <div class="main-container">
-      <div class="nav-tabs">
-        <button class="nav-tab active" onclick="switchTab('invoices')">Invoices</button>
-        <button class="nav-tab" onclick="switchTab('clients')">Clients</button>
-        <button class="nav-tab" onclick="switchTab('payments')">Payments</button>
+    <main>
+      <nav class="tabs" id="tabs"></nav>
+      <div class="toolbar">
+        <div class="count" id="count"></div>
+        <button class="btn btn-ghost" id="refresh">Refresh</button>
       </div>
-
-      <div id="error-container"></div>
-
-      <!-- Invoices Tab -->
-      <div id="invoices-tab" class="tab-content" style="display: block;">
-        <div id="invoices-content">
-          <div class="loading">Loading invoices...</div>
-        </div>
-      </div>
-
-      <!-- Clients Tab -->
-      <div id="clients-tab" class="tab-content" style="display: none;">
-        <div id="clients-content">
-          <div class="loading">Loading clients...</div>
-        </div>
-      </div>
-
-      <!-- Payments Tab -->
-      <div id="payments-tab" class="tab-content" style="display: none;">
-        <div id="payments-content">
-          <div class="loading">Loading payments...</div>
-        </div>
-      </div>
-    </div>
+      <div id="view"><div class="state">Loading…</div></div>
+    </main>
   </div>
 
   <script>
-    // Configuration
     const API_URL = "https://ck-pasaubuy.vercel.app/api/notion";
-    let portalToken = null;
+    const TABS = [
+      ["invoices", "Invoices"],
+      ["invoice_lines", "Invoice Lines"],
+      ["clients", "Clients"],
+      ["products", "Products"],
+      ["pricebook", "Pricebook"],
+      ["payments", "Payments"],
+    ];
 
-    // Check if already logged in
-    window.addEventListener("load", () => {
-      const stored = localStorage.getItem("portal_token");
-      if (stored) {
-        portalToken = stored;
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) =>
+      String(v).replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+      );
+
+    let token = null;
+    let activeTab = TABS[0][0];
+
+    async function fetchDb(db, tok) {
+      const res = await fetch(`${API_URL}?db=${encodeURIComponent(db)}`, {
+        headers: { "X-Portal-Token": tok },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const err = new Error(body.error || `Request failed (${res.status})`);
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    }
+
+    // Login
+    $("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const pw = $("pw").value;
+      const btn = $("login-btn");
+      $("login-error").textContent = "";
+      btn.disabled = true;
+      btn.textContent = "Checking…";
+      try {
+        await fetchDb(TABS[0][0], pw);
+        token = pw;
+        sessionStorage.setItem("portal_token", pw);
         showPortal();
-        loadInvoices();
-      } else {
-        showLogin();
+      } catch (err) {
+        $("login-error").textContent =
+          err.status === 401 ? "Wrong password." : err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Unlock";
       }
     });
 
-    function showLogin() {
-      document.getElementById("login-view").style.display = "flex";
-      document.getElementById("portal-view").style.display = "none";
+    $("logout").addEventListener("click", () => {
+      sessionStorage.removeItem("portal_token");
+      token = null;
+      $("pw").value = "";
+      $("portal").classList.add("hidden");
+      $("login").classList.remove("hidden");
+    });
+
+    $("refresh").addEventListener("click", () => load(activeTab));
+
+    function buildTabs() {
+      $("tabs").innerHTML = TABS.map(
+        ([key, label]) =>
+          `<button class="tab${key === activeTab ? " active" : ""}" data-db="${key}">${label}</button>`
+      ).join("");
+      $("tabs").querySelectorAll(".tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          activeTab = btn.dataset.db;
+          buildTabs();
+          load(activeTab);
+        });
+      });
     }
 
     function showPortal() {
-      document.getElementById("login-view").style.display = "none";
-      document.getElementById("portal-view").style.display = "block";
+      $("login").classList.add("hidden");
+      $("portal").classList.remove("hidden");
+      buildTabs();
+      load(activeTab);
     }
 
-    function handleLogin() {
-      const password = document.getElementById("portal-password").value;
-      if (!password) {
-        showLoginError("Password required");
+    function render(data) {
+      if (!data.records.length) {
+        $("view").innerHTML = '<div class="state">No records in this database.</div>';
         return;
       }
+      const cols = data.columns;
+      const head = cols.map((c) => `<th>${esc(c)}</th>`).join("");
+      const rows = data.records
+        .map((r) => {
+          const cells = cols
+            .map((c) => {
+              const v = r.fields[c] ?? "";
+              return `<td>${v === "" ? "—" : esc(v)}</td>`;
+            })
+            .join("");
+          return `<tr>${cells}<td><a href="${esc(r.url)}" target="_blank" rel="noopener">Notion ↗</a></td></tr>`;
+        })
+        .join("");
+      $("view").innerHTML =
+        `<div class="table-scroll"><table><thead><tr>${head}<th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
 
-      portalToken = password;
-      localStorage.setItem("portal_token", password);
+    async function load(db) {
+      $("view").innerHTML = '<div class="state">Loading…</div>';
+      $("count").textContent = "";
+      try {
+        const data = await fetchDb(db, token);
+        $("count").textContent = `${data.count} record${data.count === 1 ? "" : "s"}`;
+        render(data);
+      } catch (err) {
+        if (err.status === 401) {
+          sessionStorage.removeItem("portal_token");
+          token = null;
+          $("portal").classList.add("hidden");
+          $("login").classList.remove("hidden");
+          $("login-error").textContent = "Session expired. Enter the password again.";
+          return;
+        }
+        $("view").innerHTML = `<div class="state error">${esc(err.message)}</div>`;
+      }
+    }
+
+    const saved = sessionStorage.getItem("portal_token");
+    if (saved) {
+      token = saved;
       showPortal();
-      loadInvoices();
-    }
-
-    function handleLogout() {
-      localStorage.removeItem("portal_token");
-      portalToken = null;
-      document.getElementById("portal-password").value = "";
-      document.getElementById("login-error").style.display = "none";
-      showLogin();
-    }
-
-    function showLoginError(message) {
-      const errorEl = document.getElementById("login-error");
-      errorEl.textContent = message;
-      errorEl.style.display = "block";
-    }
-
-    function showError(message) {
-      const container = document.getElementById("error-container");
-      container.innerHTML = `<div class="error-message">${message}</div>`;
-    }
-
-    function switchTab(tab) {
-      // Hide all tabs
-      document.querySelectorAll(".tab-content").forEach((el) => {
-        el.style.display = "none";
-      });
-
-      // Deactivate all buttons
-      document.querySelectorAll(".nav-tab").forEach((el) => {
-        el.classList.remove("active");
-      });
-
-      // Show selected tab
-      document.getElementById(tab + "-tab").style.display = "block";
-      event.target.classList.add("active");
-
-      // Load data if not already loaded
-      if (tab === "invoices") loadInvoices();
-      if (tab === "clients") loadClients();
-      if (tab === "payments") loadPayments();
-    }
-
-    async function fetchNotionData(database) {
-      try {
-        const response = await fetch(
-          `${API_URL}?db=${database}&token=${encodeURIComponent(portalToken)}`
-        );
-
-        if (response.status === 401) {
-          handleLogout();
-          showLoginError("Session expired. Please login again.");
-          throw new Error("Unauthorized");
-        }
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to fetch data");
-        }
-
-        return await response.json();
-      } catch (error) {
-        showError(`Error loading data: ${error.message}`);
-        throw error;
-      }
-    }
-
-    async function loadInvoices() {
-      const content = document.getElementById("invoices-content");
-      content.innerHTML = '<div class="loading">Loading invoices...</div>';
-
-      try {
-        const data = await fetchNotionData("invoices");
-        const html = buildTable(data.records, [
-          "Invoice #",
-          "Client",
-          "Amount",
-          "Status",
-          "Date",
-        ]);
-        content.innerHTML = html;
-      } catch (error) {
-        content.innerHTML =
-          '<div class="error-message">Failed to load invoices</div>';
-      }
-    }
-
-    async function loadClients() {
-      const content = document.getElementById("clients-content");
-      content.innerHTML = '<div class="loading">Loading clients...</div>';
-
-      try {
-        const data = await fetchNotionData("clients");
-        const html = buildTable(data.records, ["Name", "Email", "Phone"]);
-        content.innerHTML = html;
-      } catch (error) {
-        content.innerHTML =
-          '<div class="error-message">Failed to load clients</div>';
-      }
-    }
-
-    async function loadPayments() {
-      const content = document.getElementById("payments-content");
-      content.innerHTML = '<div class="loading">Loading payments...</div>';
-
-      try {
-        const data = await fetchNotionData("payments");
-        const html = buildTable(data.records, [
-          "Payment ID",
-          "Amount",
-          "Status",
-          "Date",
-        ]);
-        content.innerHTML = html;
-      } catch (error) {
-        content.innerHTML =
-          '<div class="error-message">Failed to load payments</div>';
-      }
-    }
-
-    function buildTable(records, columns) {
-      if (!records || records.length === 0) {
-        return "<p style='text-align: center; opacity: 0.6; padding: 2rem;'>No records found</p>";
-      }
-
-      let html =
-        '<table class="data-table"><thead><tr>' +
-        columns.map((col) => `<th>${col}</th>`).join("") +
-        "</tr></thead><tbody>";
-
-      records.forEach((record) => {
-        html += "<tr>";
-        columns.forEach((col) => {
-          const value = record.properties[col]?.["text"]?.[0]?.["plain_text"] || "-";
-          html += `<td>${value}</td>`;
-        });
-        html += "</tr>";
-      });
-
-      html += "</tbody></table>";
-      return html;
+    } else {
+      $("login").classList.remove("hidden");
     }
   </script>
 

@@ -1,7 +1,6 @@
 {
-  "buildCommand": "npm install",
-  "env": {
-    "NOTION_API_KEY": "@notion_api_key",
-    "PORTAL_TOKEN": "@portal_token"
-  }
+  "rewrites": [
+    { "source": "/", "destination": "/portal.html" },
+    { "source": "/devtools", "destination": "/index.html" }
+  ]
 }
