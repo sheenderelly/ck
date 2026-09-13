@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PasaBuy Portal — Order Management</title>
+  <link rel="stylesheet" href="style.css?v=11">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto Mono', monospace;
+      background: var(--bg-primary, #0a0e27);
+      color: var(--text-primary, #e0e0e0);
+      line-height: 1.6;
+    }
+
+    .app-header {
+      background: var(--bg-secondary, #151b2f);
+      border-bottom: 1px solid var(--border, #2a3f5f);
+      padding: 1rem;
+    }
+
+    .app-header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 600;
+      font-size: 1.2rem;
+    }
+
+    .brand-title {
+      font-weight: 700;
+    }
+
+    .brand-sub {
+      font-size: 0.75rem;
+      opacity: 0.6;
+    }
+
+    .logout-btn {
+      padding: 0.5rem 1rem;
+      background: var(--accent, #ff6b6b);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    .logout-btn:hover {
+      opacity: 0.9;
+    }
+
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: var(--bg-primary, #0a0e27);
+    }
+
+    .login-box {
+      background: var(--bg-secondary, #151b2f);
+      padding: 2rem;
+      border-radius: 8px;
+      border: 1px solid var(--border, #2a3f5f);
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .login-box h1 {
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    .login-box .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .login-box label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--bg-primary, #0a0e27);
+      border: 1px solid var(--border, #2a3f5f);
+      color: var(--text-primary, #e0e0e0);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+
+    .login-box input:focus {
+      outline: none;
+      border-color: var(--accent, #ff6b6b);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--accent, #ff6b6b);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+
+    .login-btn:hover {
+      opacity: 0.9;
+    }
+
+    .login-error {
+      color: #ff6b6b;
+      margin-top: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .main-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border, #2a3f5f);
+      padding-bottom: 1rem;
+    }
+
+    .nav-tab {
+      padding: 0.5rem 1rem;
+      background: none;
+      border: none;
+      color: var(--text-primary, #e0e0e0);
+      cursor: pointer;
+      opacity: 0.6;
+      font-family: inherit;
+      font-size: 0.95rem;
+      border-bottom: 2px solid transparent;
+    }
+
+    .nav-tab.active {
+      opacity: 1;
+      border-bottom-color: var(--accent, #ff6b6b);
+    }
+
+    .nav-tab:hover {
+      opacity: 0.8;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--bg-secondary, #151b2f);
+      border: 1px solid var(--border, #2a3f5f);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border, #2a3f5f);
+      font-size: 0.9rem;
+    }
+
+    .data-table th {
+      background: var(--bg-primary, #0a0e27);
+      font-weight: 600;
+      opacity: 0.9;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover {
+      background: rgba(255, 107, 107, 0.05);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      opacity: 0.6;
+    }
+
+    .error-message {
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid #ff6b6b;
+      color: #ff9999;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .data-table {
+        font-size: 0.85rem;
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: 0.75rem;
+      }
+
+      .main-container {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- LOGIN VIEW -->
+  <div id="login-view" class="login-container" style="display: none;">
+    <div class="login-box">
+      <h1>PasaBuy Portal</h1>
+      <div class="form-group">
+        <label for="portal-password">Portal Password</label>
+        <input
+          id="portal-password"
+          type="password"
+          placeholder="Enter portal password"
+          autocomplete="off"
+        >
+      </div>
+      <button class="login-btn" onclick="handleLogin()">Login</button>
+      <div id="login-error" class="login-error" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- PORTAL VIEW -->
+  <div id="portal-view" style="display: none;">
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="brand-mark">
+          <div>
+            <div class="brand-title">PasaBuy Portal</div>
+            <div class="brand-sub">Order Management</div>
+          </div>
+        </div>
+        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+      </div>
+    </header>
+
+    <div class="main-container">
+      <div class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('invoices')">Invoices</button>
+        <button class="nav-tab" onclick="switchTab('clients')">Clients</button>
+        <button class="nav-tab" onclick="switchTab('payments')">Payments</button>
+      </div>
+
+      <div id="error-container"></div>
+
+      <!-- Invoices Tab -->
+      <div id="invoices-tab" class="tab-content" style="display: block;">
+        <div id="invoices-content">
+          <div class="loading">Loading invoices...</div>
+        </div>
+      </div>
+
+      <!-- Clients Tab -->
+      <div id="clients-tab" class="tab-content" style="display: none;">
+        <div id="clients-content">
+          <div class="loading">Loading clients...</div>
+        </div>
+      </div>
+
+      <!-- Payments Tab -->
+      <div id="payments-tab" class="tab-content" style="display: none;">
+        <div id="payments-content">
+          <div class="loading">Loading payments...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const API_URL = "https://ck-api.vercel.app/api/notion"; // Update after deploying to Vercel
+    let portalToken = null;
+
+    // Check if already logged in
+    window.addEventListener("load", () => {
+      const stored = localStorage.getItem("portal_token");
+      if (stored) {
+        portalToken = stored;
+        showPortal();
+        loadInvoices();
+      } else {
+        showLogin();
+      }
+    });
+
+    function showLogin() {
+      document.getElementById("login-view").style.display = "flex";
+      document.getElementById("portal-view").style.display = "none";
+    }
+
+    function showPortal() {
+      document.getElementById("login-view").style.display = "none";
+      document.getElementById("portal-view").style.display = "block";
+    }
+
+    function handleLogin() {
+      const password = document.getElementById("portal-password").value;
+      if (!password) {
+        showLoginError("Password required");
+        return;
+      }
+
+      portalToken = password;
+      localStorage.setItem("portal_token", password);
+      showPortal();
+      loadInvoices();
+    }
+
+    function handleLogout() {
+      localStorage.removeItem("portal_token");
+      portalToken = null;
+      document.getElementById("portal-password").value = "";
+      document.getElementById("login-error").style.display = "none";
+      showLogin();
+    }
+
+    function showLoginError(message) {
+      const errorEl = document.getElementById("login-error");
+      errorEl.textContent = message;
+      errorEl.style.display = "block";
+    }
+
+    function showError(message) {
+      const container = document.getElementById("error-container");
+      container.innerHTML = `<div class="error-message">${message}</div>`;
+    }
+
+    function switchTab(tab) {
+      // Hide all tabs
+      document.querySelectorAll(".tab-content").forEach((el) => {
+        el.style.display = "none";
+      });
+
+      // Deactivate all buttons
+      document.querySelectorAll(".nav-tab").forEach((el) => {
+        el.classList.remove("active");
+      });
+
+      // Show selected tab
+      document.getElementById(tab + "-tab").style.display = "block";
+      event.target.classList.add("active");
+
+      // Load data if not already loaded
+      if (tab === "invoices") loadInvoices();
+      if (tab === "clients") loadClients();
+      if (tab === "payments") loadPayments();
+    }
+
+    async function fetchNotionData(database) {
+      try {
+        const response = await fetch(
+          `${API_URL}?db=${database}&token=${encodeURIComponent(portalToken)}`
+        );
+
+        if (response.status === 401) {
+          handleLogout();
+          showLoginError("Session expired. Please login again.");
+          throw new Error("Unauthorized");
+        }
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to fetch data");
+        }
+
+        return await response.json();
+      } catch (error) {
+        showError(`Error loading data: ${error.message}`);
+        throw error;
+      }
+    }
+
+    async function loadInvoices() {
+      const content = document.getElementById("invoices-content");
+      content.innerHTML = '<div class="loading">Loading invoices...</div>';
+
+      try {
+        const data = await fetchNotionData("invoices");
+        const html = buildTable(data.records, [
+          "Invoice #",
+          "Client",
+          "Amount",
+          "Status",
+          "Date",
+        ]);
+        content.innerHTML = html;
+      } catch (error) {
+        content.innerHTML =
+          '<div class="error-message">Failed to load invoices</div>';
+      }
+    }
+
+    async function loadClients() {
+      const content = document.getElementById("clients-content");
+      content.innerHTML = '<div class="loading">Loading clients...</div>';
+
+      try {
+        const data = await fetchNotionData("clients");
+        const html = buildTable(data.records, ["Name", "Email", "Phone"]);
+        content.innerHTML = html;
+      } catch (error) {
+        content.innerHTML =
+          '<div class="error-message">Failed to load clients</div>';
+      }
+    }
+
+    async function loadPayments() {
+      const content = document.getElementById("payments-content");
+      content.innerHTML = '<div class="loading">Loading payments...</div>';
+
+      try {
+        const data = await fetchNotionData("payments");
+        const html = buildTable(data.records, [
+          "Payment ID",
+          "Amount",
+          "Status",
+          "Date",
+        ]);
+        content.innerHTML = html;
+      } catch (error) {
+        content.innerHTML =
+          '<div class="error-message">Failed to load payments</div>';
+      }
+    }
+
+    function buildTable(records, columns) {
+      if (!records || records.length === 0) {
+        return "<p style='text-align: center; opacity: 0.6; padding: 2rem;'>No records found</p>";
+      }
+
+      let html =
+        '<table class="data-table"><thead><tr>' +
+        columns.map((col) => `<th>${col}</th>`).join("") +
+        "</tr></thead><tbody>";
+
+      records.forEach((record) => {
+        html += "<tr>";
+        columns.forEach((col) => {
+          const value = record.properties[col]?.["text"]?.[0]?.["plain_text"] || "-";
+          html += `<td>${value}</td>`;
+        });
+        html += "</tr>";
+      });
+
+      html += "</tbody></table>";
+      return html;
+    }
+  </script>
+
+</body>
+</html>
