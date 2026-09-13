@@ -69,9 +69,74 @@ function plainValue(prop) {
   }
 }
 
+// Only these properties may be written, so a stolen token cannot rewrite arbitrary fields.
+const WRITABLE = {
+  pricebook: { "PHP override": "number", "x rate": "select", "is final": "checkbox" },
+};
+
+const UUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
+
+function writePayload(type, value) {
+  if (value === null || value === "") {
+    return type === "checkbox" ? { checkbox: false } : { [type]: null };
+  }
+  switch (type) {
+    case "number": {
+      const n = Number(value);
+      if (!Number.isFinite(n)) throw new Error("Value must be a number");
+      return { number: n };
+    }
+    case "select":
+      return { select: { name: String(value) } };
+    case "checkbox":
+      return { checkbox: Boolean(value) };
+    default:
+      throw new Error(`Unsupported property type ${type}`);
+  }
+}
+
+async function handleUpdate(req, res) {
+  const { db, pageId, property, value } = req.body ?? {};
+
+  const writable = WRITABLE[db];
+  if (!writable) {
+    return res.status(400).json({
+      error: `Not writable: ${db ?? "no database given"}. Writable: ${Object.keys(WRITABLE).join(", ")}`,
+    });
+  }
+
+  const type = writable[property];
+  if (!type) {
+    return res.status(400).json({
+      error: `"${property}" is not writable. Allowed: ${Object.keys(writable).join(", ")}`,
+    });
+  }
+
+  if (!UUID.test(pageId ?? "")) return res.status(400).json({ error: "Invalid pageId" });
+
+  let payload;
+  try {
+    payload = writePayload(type, value);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+
+  try {
+    const page = await notion.pages.update({
+      page_id: pageId,
+      properties: { [property]: payload },
+    });
+    return res.status(200).json({ id: page.id, property, value: plainValue(page.properties[property]) });
+  } catch (error) {
+    return res.status(error.status === 404 ? 404 : 500).json({ error: error.message });
+  }
+}
+
 export default async function handler(req, res) {
   // No CORS headers: the portal is served from this same Vercel deployment.
-  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "GET" && req.method !== "PATCH") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
   if (!process.env.NOTION_API_KEY || !process.env.PORTAL_TOKEN) {
     return res.status(500).json({ error: "Server is missing NOTION_API_KEY or PORTAL_TOKEN" });
@@ -81,6 +146,8 @@ export default async function handler(req, res) {
   if (token !== process.env.PORTAL_TOKEN) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+
+  if (req.method === "PATCH") return handleUpdate(req, res);
 
   const db = req.query.db;
   if (!db || !DATABASES[db]) {

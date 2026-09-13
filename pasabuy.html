@@ -108,6 +108,67 @@
     }
 
     .state-msg.is-error { color: var(--error); border-color: var(--error); }
+
+    .pricing-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-tight);
+      align-items: flex-end;
+      padding: var(--spacing-tight);
+      margin-bottom: var(--spacing-tight);
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .pricing-field { display: flex; flex-direction: column; gap: 0.3rem; }
+
+    .pricing-field label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .pricing-field input,
+    .pricing-field select {
+      width: 130px;
+      height: 2.1rem;
+      padding: 0 0.55rem;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      font-size: 0.9rem;
+    }
+
+    .pricing-field input:focus,
+    .pricing-field select:focus { outline: none; border-color: var(--accent); }
+
+    .pricing-note { color: var(--text-muted); font-size: 0.75rem; flex: 1; min-width: 180px; }
+
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .override-input {
+      width: 90px;
+      padding: 0.3rem 0.4rem;
+      background: var(--bg-main);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: var(--font-family);
+      font-size: 0.85rem;
+      text-align: right;
+    }
+
+    .override-input:focus { outline: none; border-color: var(--accent); }
+    .override-input.is-saving { opacity: 0.5; }
+    .override-input.is-saved { border-color: var(--success); }
+    .override-input.is-failed { border-color: var(--error); }
+
+    .final-price { font-weight: 700; }
+    .final-price.is-override { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -173,7 +234,7 @@
           <div class="tool-icon">¥</div>
           <div class="tool-details">
             <h3>Pricebook</h3>
-            <p>Pricing entries per product.</p>
+            <p>Convert yen costs to peso prices, or set your own.</p>
           </div>
         </div>
       </div>
@@ -274,6 +335,145 @@
       show("login-view");
     }
 
+    /* ---- pricebook ---- */
+    const PRICING_KEY = "pasabuy_pricing";
+    const PRICING_DEFAULTS = { rate: 0.4, markup: 0, base: "JPY" };
+    let pricebookData = null;
+    let pricing = readPricing();
+
+    function readPricing() {
+      try {
+        return { ...PRICING_DEFAULTS, ...JSON.parse(localStorage.getItem(PRICING_KEY) || "{}") };
+      } catch (e) {
+        return { ...PRICING_DEFAULTS };
+      }
+    }
+
+    function writePricing() {
+      try { localStorage.setItem(PRICING_KEY, JSON.stringify(pricing)); } catch (e) {}
+    }
+
+    const peso = (n) => "₱" + n.toLocaleString("en-PH");
+    const yen = (n) => (Number.isFinite(Number(n)) && n !== "" ? "¥" + Number(n).toLocaleString() : "—");
+
+    function computed(fields) {
+      const base = Number(fields[pricing.base]);
+      if (!Number.isFinite(base) || base <= 0) return null;
+      return Math.round(base * pricing.rate * (1 + pricing.markup / 100));
+    }
+
+    function finalCell(fields) {
+      const override = Number(fields["PHP override"]);
+      if (Number.isFinite(override) && fields["PHP override"] !== "") {
+        return `<span class="final-price is-override">${peso(override)}</span>`;
+      }
+      const calc = computed(fields);
+      return calc === null
+        ? '<span class="final-price">—</span>'
+        : `<span class="final-price">${peso(calc)}</span>`;
+    }
+
+    function renderPricebook(data) {
+      pricebookData = data;
+      const rows = data.records
+        .map((r) => {
+          const f = r.fields;
+          const calc = computed(f);
+          const ov = f["PHP override"];
+          return `<tr>
+            <td>${esc(f["pricebook for"] || "—")}</td>
+            <td class="num">${yen(f["JPY"])}</td>
+            <td class="num">${yen(f["lowest price"])}</td>
+            <td class="num">${yen(f["SRP (JPY)"])}</td>
+            <td class="num">${calc === null ? "—" : peso(calc)}</td>
+            <td class="num"><input class="override-input" type="number" min="0" step="1"
+              data-id="${esc(r.id)}" value="${ov === "" || ov === undefined ? "" : esc(ov)}"
+              placeholder="—"></td>
+            <td class="num" id="final-${esc(r.id)}">${finalCell(f)}</td>
+          </tr>`;
+        })
+        .join("");
+
+      $("record-body").innerHTML = `
+        <div class="pricing-bar">
+          <div class="pricing-field">
+            <label for="p-rate">JPY → PHP rate</label>
+            <input id="p-rate" type="number" step="0.01" min="0" value="${pricing.rate}">
+          </div>
+          <div class="pricing-field">
+            <label for="p-markup">Markup %</label>
+            <input id="p-markup" type="number" step="1" min="0" value="${pricing.markup}">
+          </div>
+          <div class="pricing-field">
+            <label for="p-base">Base cost</label>
+            <select id="p-base">
+              <option value="JPY"${pricing.base === "JPY" ? " selected" : ""}>My cost (JPY)</option>
+              <option value="lowest price"${pricing.base === "lowest price" ? " selected" : ""}>Lowest found</option>
+              <option value="SRP (JPY)"${pricing.base === "SRP (JPY)" ? " selected" : ""}>SRP (JPY)</option>
+            </select>
+          </div>
+          <div class="pricing-note">
+            Price = base × rate × (1 + markup). An override replaces it and saves straight to Notion.
+          </div>
+        </div>
+        <div class="table-scroll"><table class="record-table">
+          <thead><tr>
+            <th>Product</th><th class="num">Cost</th><th class="num">Lowest</th>
+            <th class="num">SRP</th><th class="num">Computed</th>
+            <th class="num">Override</th><th class="num">Price</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>`;
+
+      ["p-rate", "p-markup", "p-base"].forEach((id) => {
+        $(id).addEventListener("change", () => {
+          pricing = {
+            rate: Number($("p-rate").value) || 0,
+            markup: Number($("p-markup").value) || 0,
+            base: $("p-base").value,
+          };
+          writePricing();
+          renderPricebook(pricebookData);
+        });
+      });
+
+      $("record-body").querySelectorAll(".override-input").forEach((input) => {
+        input.addEventListener("change", () => saveOverride(input));
+      });
+    }
+
+    async function saveOverride(input) {
+      const pageId = input.dataset.id;
+      const raw = input.value.trim();
+      input.className = "override-input is-saving";
+      try {
+        const res = await fetch(API_URL, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", "X-Portal-Token": token },
+          body: JSON.stringify({
+            db: "pricebook",
+            pageId,
+            property: "PHP override",
+            value: raw === "" ? null : Number(raw),
+          }),
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Save failed (${res.status})`);
+        }
+        const saved = await res.json();
+        const rec = pricebookData.records.find((r) => r.id === pageId);
+        if (rec) {
+          rec.fields["PHP override"] = saved.value;
+          $(`final-${pageId}`).innerHTML = finalCell(rec.fields);
+        }
+        input.className = "override-input is-saved";
+      } catch (err) {
+        input.className = "override-input is-failed";
+        input.title = err.message;
+      }
+    }
+
     async function openDb(db, label) {
       currentDb = db;
       $("record-title").textContent = label;
@@ -283,7 +483,8 @@
       try {
         const data = await fetchDb(db, token);
         $("record-count").textContent = `${data.count} record${data.count === 1 ? "" : "s"}`;
-        renderTable(data);
+        if (db === "pricebook") renderPricebook(data);
+        else renderTable(data);
       } catch (err) {
         if (err.status === 401) return lock("Session expired. Enter the password again.");
         $("record-body").innerHTML = `<div class="state-msg is-error">${esc(err.message)}</div>`;
