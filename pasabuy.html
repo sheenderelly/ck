@@ -177,9 +177,16 @@
           <div class="tool-icon">品</div>
           <div class="tool-details">
             <h3>Products</h3>
-            <p>Catalog of items available to order.</p>
+            <p>Raw product records as a table.</p>
           </div>
         </div>
+        <a class="panel tool-card" href="/catalog">
+          <div class="tool-icon">図</div>
+          <div class="tool-details">
+            <h3>Catalog</h3>
+            <p>Browse products with photos and prices.</p>
+          </div>
+        </a>
         <div class="panel tool-card" data-db="pricebook" data-label="Pricebook">
           <div class="tool-icon">¥</div>
           <div class="tool-details">
@@ -436,7 +443,8 @@
     }
 
     /* ---- events ---- */
-    document.querySelectorAll(".tool-card").forEach((card) => {
+    // Cards without a data-db are plain links (the catalog), so leave them alone.
+    document.querySelectorAll(".tool-card[data-db]").forEach((card) => {
       card.addEventListener("click", () => openDb(card.dataset.db, card.dataset.label));
     });
 

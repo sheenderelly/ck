@@ -177,6 +177,21 @@ async function handleUpdate(req, res) {
   }
 }
 
+// Notion serves uploaded files through signed URLs that expire in about an hour,
+// so these are handed straight to the browser and never stored anywhere.
+export function fileUrls(prop) {
+  if (!prop) return [];
+  if (prop.type === "files") {
+    return (prop.files ?? [])
+      .map((f) => ({ name: f.name, url: f.type === "external" ? f.external?.url : f.file?.url }))
+      .filter((f) => f.url);
+  }
+  if (prop.type === "rollup" && prop.rollup?.type === "array") {
+    return (prop.rollup.array ?? []).flatMap(fileUrls);
+  }
+  return [];
+}
+
 export default async function handler(req, res) {
   // No CORS headers: the portal is served from this same Vercel deployment.
   if (req.method !== "GET" && req.method !== "PATCH") {
@@ -209,10 +224,15 @@ export default async function handler(req, res) {
 
     const records = response.results.map((page) => {
       const fields = {};
+      const media = {};
       for (const [name, prop] of Object.entries(page.properties)) {
         fields[name] = plainValue(prop);
+        const files = fileUrls(prop);
+        if (files.length) media[name] = files;
       }
-      return { id: page.id, url: page.url, fields };
+      const record = { id: page.id, url: page.url, fields };
+      if (Object.keys(media).length) record.media = media;
+      return record;
     });
 
     // Title property first, remaining columns in Notion's order.
