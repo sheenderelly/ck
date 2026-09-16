@@ -6,6 +6,7 @@ export const config = { matcher: "/((?!_vercel).*)" };
 const PUBLIC_PATHS = new Set(["/login", "/login.html", "/api/login", "/api/logout"]);
 
 const COOKIE = "ck_session";
+const NO_STORE = "no-store, no-cache, must-revalidate";
 const encoder = new TextEncoder();
 
 async function expectedSignature(value, secret) {
@@ -58,7 +59,7 @@ export default async function middleware(request) {
     // Fail closed: without a configured password nothing is protected, so serve nothing.
     return new Response("Site is not configured: PORTAL_TOKEN is unset.", {
       status: 503,
-      headers: { "content-type": "text/plain" },
+      headers: { "content-type": "text/plain", "cache-control": NO_STORE },
     });
   }
 
@@ -68,11 +69,20 @@ export default async function middleware(request) {
   if (path.startsWith("/api/")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "cache-control": NO_STORE },
     });
   }
 
   const login = new URL("/login", url);
   if (path !== "/") login.searchParams.set("next", path + url.search);
-  return Response.redirect(login, 302);
+
+  // Built by hand rather than Response.redirect(), whose headers are immutable.
+  // Without no-store the browser can cache this bounce and replay it after a
+  // successful login, which looks exactly like the password being refused.
+  const headers = { location: login.toString(), "cache-control": NO_STORE };
+
+  // Drop a dead session so the browser stops sending it on every later request.
+  if (session) headers["set-cookie"] = `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+
+  return new Response(null, { status: 302, headers });
 }
