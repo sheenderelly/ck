@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="style.css?v=11">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
     .cat-toolbar {
@@ -36,45 +36,48 @@
     .cat-toolbar input:focus, .cat-toolbar select:focus { outline: none; border-color: var(--accent); }
     .cat-count { color: var(--text-muted); font-size: 0.8rem; }
 
-    /* Product cut-outs are transparent and shot for white, so the backing stays
-       light in both themes — on a dark ground their caps and text disappear. */
-    :root { --product-bg: #f2f1ea; }
-
-    .cat-media { position: relative; }
-
-    .cat-price-badge {
-      position: absolute;
-      left: 0.45rem;
-      bottom: 0.45rem;
-      padding: 0.18rem 0.45rem;
-      border-radius: var(--radius-sm);
-      background: rgba(16, 18, 14, 0.82);
-      color: #d4e157;
-      font-size: 0.85rem;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      pointer-events: none;
+    /* Cards follow the brand, not the UI theme: product cut-outs are shot against
+       white, and the whole look is a light card with a red price. */
+    :root {
+      --card-bg: #faf7f2;
+      --card-edge: #e6ded2;
+      --card-ink: #2b2a27;
+      --card-muted: #8d8579;
+      --price-red: #d3252b;
+      --sakura: #f2a8c0;
+      --product-bg: #ffffff;
     }
-
-    .cat-price-badge.is-missing { color: #cfcfc6; font-weight: 400; font-size: 0.68rem; }
 
     .cat-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-      gap: 1rem;
+      grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+      gap: 1.1rem;
     }
 
     .cat-card {
+      position: relative;
       display: flex;
       flex-direction: column;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
+      align-items: center;
+      padding: 1rem 0.9rem 0.85rem;
+      background: var(--card-bg);
+      border: 1px solid var(--card-edge);
+      border-radius: 14px;
       overflow: hidden;
       transition: var(--transition);
     }
 
-    .cat-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .cat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.45); }
+
+    .cat-sakura {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 84px;
+      height: 84px;
+      opacity: 0.85;
+      pointer-events: none;
+    }
 
     .cat-thumb {
       appearance: none;
@@ -82,14 +85,16 @@
       padding: 0;
       margin: 0;
       display: block;
-      width: 100%;
+      width: 86%;
       aspect-ratio: 1;
+      border-radius: 50%;
       background: var(--product-bg);
+      box-shadow: 0 0 0 1px var(--card-edge);
       cursor: zoom-in;
       overflow: hidden;
     }
 
-    .cat-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .cat-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .cat-thumb.is-empty { cursor: default; }
 
     .cat-placeholder {
@@ -98,30 +103,63 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #a8a89c;
-      font-size: 1.4rem;
+      color: #c4bcae;
+      font-size: 1.6rem;
       font-weight: 700;
       letter-spacing: 0.05em;
     }
 
-    .cat-body { padding: 0.7rem 0.8rem 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; flex: 1; }
+    .cat-body {
+      width: 100%;
+      margin-top: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      flex: 1;
+    }
 
     .cat-name {
+      font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
       font-size: 0.82rem;
-      font-weight: 600;
-      line-height: 1.35;
+      font-weight: 700;
+      line-height: 1.3;
+      text-align: center;
+      color: var(--card-ink);
       white-space: pre-line;
       overflow-wrap: anywhere;
     }
 
     .cat-lineup {
-      font-size: 0.68rem;
+      font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.62rem;
+      font-weight: 500;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      color: var(--card-muted);
+      text-align: center;
     }
 
-    .cat-spec { font-size: 0.72rem; color: var(--text-secondary); overflow-wrap: anywhere; }
+    .cat-price {
+      font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+      margin-top: auto;
+      padding-top: 0.5rem;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      color: var(--price-red);
+      line-height: 1;
+    }
+
+    .cat-peso { font-size: 1rem; font-weight: 700; margin-right: 0.04em; }
+    .cat-amount { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; }
+
+    .cat-price.is-missing {
+      color: var(--card-muted);
+      font-size: 0.72rem;
+      font-weight: 500;
+      padding-top: 0.7rem;
+    }
 
     .state-msg {
       padding: 2.5rem 1rem;
@@ -269,16 +307,40 @@
       String(name).replace(/[^A-Za-z0-9 ]/g, " ").trim().split(/\s+/).slice(0, 2)
         .map((w) => w[0]).join("").toUpperCase() || "—";
 
+    // One blossom cluster, reused in every card corner.
+    const SAKURA = `<svg class="cat-sakura" viewBox="0 0 100 100" aria-hidden="true">
+      <g fill="var(--sakura)">
+        ${[
+          [74, 20, 1.15],
+          [50, 12, 0.72],
+          [88, 44, 0.6],
+        ]
+          .map(
+            ([x, y, s]) => `<g transform="translate(${x},${y}) scale(${s})">
+              ${[0, 72, 144, 216, 288]
+                .map((deg) => `<ellipse cx="0" cy="-9" rx="5.4" ry="8" transform="rotate(${deg})"/>`)
+                .join("")}
+              <circle r="2.5" fill="#e0789c"/>
+            </g>`
+          )
+          .join("")}
+      </g>
+    </svg>`;
+
     function toProduct(r) {
       const f = r.fields;
       const name = f["product name"] || f["item name "] || f["jp name"] || "Untitled";
       const image = r.media && r.media.image ? r.media.image[0].url : null;
+      const raw = f["list price"];
+      const amount =
+        Number.isFinite(Number(raw)) && raw !== "" ? Number(raw).toLocaleString("en-PH") : null;
       return {
         name,
         image,
         lineup: f.lineup || "",
         spec: f.spec || "",
-        price: peso(f["list price"]),
+        amount,
+        price: amount ? "₱" + amount : null,
         search: [name, f.lineup, f.spec, f["jp name"], f["jan code"]].join(" ").toLowerCase(),
       };
     }
@@ -308,15 +370,16 @@
               ? `<button class="cat-thumb" data-i="${i}" aria-label="View image">
                    <img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy"></button>`
               : `<div class="cat-thumb is-empty"><div class="cat-placeholder">${esc(initials(p.name))}</div></div>`;
+            const price = p.amount
+              ? `<div class="cat-price"><span class="cat-peso">₱</span><span class="cat-amount">${esc(p.amount)}</span></div>`
+              : '<div class="cat-price is-missing">No price yet</div>';
             return `<article class="cat-card">
-              <div class="cat-media">
-                ${thumb}
-                <span class="cat-price-badge${p.price ? "" : " is-missing"}">${p.price ? esc(p.price) : "No price yet"}</span>
-              </div>
+              ${SAKURA}
+              ${thumb}
               <div class="cat-body">
                 <div class="cat-name">${esc(p.name)}</div>
                 ${p.lineup ? `<div class="cat-lineup">${esc(p.lineup)}</div>` : ""}
-                ${p.spec ? `<div class="cat-spec">${esc(p.spec)}</div>` : ""}
+                ${price}
               </div>
             </article>`;
           })
