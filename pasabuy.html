@@ -288,8 +288,7 @@
 
     /* ---- pricebook ---- */
     const PRICING_KEY = "pasabuy_pricing";
-    const PRICING_DEFAULTS = { rate: 0.4, markup: 0, base: "JPY" };
-    const BASES = ["JPY", "SRP (JPY)"];
+    const PRICING_DEFAULTS = { rate: 0.4, markup: 0 };
     let pricebookData = null;
     let pricing = readPricing();
 
@@ -297,9 +296,7 @@
       let saved = {};
       try { saved = JSON.parse(localStorage.getItem(PRICING_KEY) || "{}"); } catch (e) {}
       const p = { ...PRICING_DEFAULTS, ...saved };
-      // A base saved before a column was removed would price everything as blank.
-      if (!BASES.includes(p.base)) p.base = PRICING_DEFAULTS.base;
-      return p;
+      return { rate: Number(p.rate) || 0, markup: Number(p.markup) || 0 };
     }
 
     function writePricing() {
@@ -310,9 +307,9 @@
     const yen = (n) => (Number.isFinite(Number(n)) && n !== "" ? "¥" + Number(n).toLocaleString() : "—");
 
     function computed(fields) {
-      const base = Number(fields[pricing.base]);
-      if (!Number.isFinite(base) || base <= 0) return null;
-      return Math.round(base * pricing.rate * (1 + pricing.markup / 100));
+      const cost = Number(fields["JPY"]);
+      if (!Number.isFinite(cost) || cost <= 0) return null;
+      return Math.round(cost * pricing.rate * (1 + pricing.markup / 100));
     }
 
     function finalCell(fields) {
@@ -336,7 +333,6 @@
           return `<tr>
             <td class="col-name">${esc(f["pricebook for"] || "—")}</td>
             <td class="num">${yen(f["JPY"])}</td>
-            <td class="num">${yen(f["SRP (JPY)"])}</td>
             <td class="num">${calc === null ? "—" : peso(calc)}</td>
             <td class="num"><input class="override-input" type="number" min="0" step="1"
               data-id="${esc(r.id)}" value="${ov === "" || ov === undefined ? "" : esc(ov)}"
@@ -356,32 +352,24 @@
             <label for="p-markup">Markup %</label>
             <input id="p-markup" type="number" step="1" min="0" value="${pricing.markup}">
           </div>
-          <div class="pricing-field">
-            <label for="p-base">Base cost</label>
-            <select id="p-base">
-              <option value="JPY"${pricing.base === "JPY" ? " selected" : ""}>My cost (JPY)</option>
-              <option value="SRP (JPY)"${pricing.base === "SRP (JPY)" ? " selected" : ""}>SRP (JPY)</option>
-            </select>
-          </div>
           <div class="pricing-note">
-            Price = base × rate × (1 + markup). An override replaces it and saves straight to Notion.
+            Price = cost × rate × (1 + markup). An override replaces it and saves straight to Notion.
           </div>
         </div>
         <div class="table-scroll"><table class="record-table">
           <thead><tr>
             <th class="col-name">Product</th><th class="num">Cost</th>
-            <th class="num">SRP</th><th class="num">Computed</th>
+            <th class="num">Computed</th>
             <th class="num">Override</th><th class="num">Price</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table></div>`;
 
-      ["p-rate", "p-markup", "p-base"].forEach((id) => {
+      ["p-rate", "p-markup"].forEach((id) => {
         $(id).addEventListener("change", () => {
           pricing = {
             rate: Number($("p-rate").value) || 0,
             markup: Number($("p-markup").value) || 0,
-            base: $("p-base").value,
           };
           writePricing();
           renderPricebook(pricebookData);
