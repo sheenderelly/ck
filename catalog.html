@@ -36,6 +36,28 @@
     .cat-toolbar input:focus, .cat-toolbar select:focus { outline: none; border-color: var(--accent); }
     .cat-count { color: var(--text-muted); font-size: 0.8rem; }
 
+    /* Product cut-outs are transparent and shot for white, so the backing stays
+       light in both themes — on a dark ground their caps and text disappear. */
+    :root { --product-bg: #f2f1ea; }
+
+    .cat-media { position: relative; }
+
+    .cat-price-badge {
+      position: absolute;
+      left: 0.45rem;
+      bottom: 0.45rem;
+      padding: 0.18rem 0.45rem;
+      border-radius: var(--radius-sm);
+      background: rgba(16, 18, 14, 0.82);
+      color: #d4e157;
+      font-size: 0.85rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+    }
+
+    .cat-price-badge.is-missing { color: #cfcfc6; font-weight: 400; font-size: 0.68rem; }
+
     .cat-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -62,7 +84,7 @@
       display: block;
       width: 100%;
       aspect-ratio: 1;
-      background: var(--bg-elevated);
+      background: var(--product-bg);
       cursor: zoom-in;
       overflow: hidden;
     }
@@ -76,7 +98,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--text-muted);
+      color: #a8a89c;
       font-size: 1.4rem;
       font-weight: 700;
       letter-spacing: 0.05em;
@@ -100,17 +122,6 @@
     }
 
     .cat-spec { font-size: 0.72rem; color: var(--text-secondary); overflow-wrap: anywhere; }
-
-    .cat-price {
-      margin-top: auto;
-      padding-top: 0.45rem;
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--accent);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .cat-price.is-missing { color: var(--text-muted); font-weight: 400; font-size: 0.8rem; }
 
     .state-msg {
       padding: 2.5rem 1rem;
@@ -142,6 +153,7 @@
       max-height: 100%;
       object-fit: contain;
       border-radius: var(--radius-sm);
+      background: var(--product-bg);
     }
 
     .lb-cap {
@@ -297,12 +309,14 @@
                    <img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy"></button>`
               : `<div class="cat-thumb is-empty"><div class="cat-placeholder">${esc(initials(p.name))}</div></div>`;
             return `<article class="cat-card">
-              ${thumb}
+              <div class="cat-media">
+                ${thumb}
+                <span class="cat-price-badge${p.price ? "" : " is-missing"}">${p.price ? esc(p.price) : "No price yet"}</span>
+              </div>
               <div class="cat-body">
                 <div class="cat-name">${esc(p.name)}</div>
                 ${p.lineup ? `<div class="cat-lineup">${esc(p.lineup)}</div>` : ""}
                 ${p.spec ? `<div class="cat-spec">${esc(p.spec)}</div>` : ""}
-                <div class="cat-price${p.price ? "" : " is-missing"}">${p.price ? esc(p.price) : "No price yet"}</div>
               </div>
             </article>`;
           })
