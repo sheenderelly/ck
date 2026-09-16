@@ -11,52 +11,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
   <style>
-    .login-shell {
-      display: flex;
-      justify-content: center;
-      padding: 4rem 0;
-    }
-
-    .login-card {
-      width: 100%;
-      max-width: 360px;
-    }
-
-    .login-card h2 { margin-bottom: 0.25rem; }
-
-    .login-card .hint {
-      color: var(--text-muted);
-      font-size: 0.85rem;
-      margin-bottom: var(--spacing-tight);
-    }
-
-    .login-card label {
-      display: block;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      margin-bottom: 0.4rem;
-    }
-
-    .login-card input {
-      width: 100%;
-      padding: 0.6rem 0.7rem;
-      background: var(--bg-main);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: var(--font-family);
-      font-size: 0.95rem;
-    }
-
-    .login-card input:focus { outline: none; border-color: var(--accent); }
-
-    .form-msg {
-      color: var(--error);
-      font-size: 0.8rem;
-      min-height: 1.1rem;
-      margin-top: 0.6rem;
-    }
-
     .record-toolbar {
       display: flex;
       align-items: center;
@@ -191,20 +145,6 @@
 
   <main class="main-content">
 
-    <!-- Login -->
-    <div id="login-view" class="view-hidden">
-      <div class="login-shell">
-        <form class="panel login-card" id="login-form">
-          <h2>Locked</h2>
-          <div class="hint">Enter the portal password to continue.</div>
-          <label for="pw">Password</label>
-          <input id="pw" type="password" autocomplete="current-password" required>
-          <div class="form-msg" id="login-msg"></div>
-          <button class="btn btn-primary" id="login-btn" type="submit">Unlock</button>
-        </form>
-      </div>
-    </div>
-
     <!-- Landing -->
     <div id="menu-view" class="tools-menu view-hidden">
       <h2>PasaBuy</h2>
@@ -268,7 +208,6 @@
         ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
       );
 
-    let token = sessionStorage.getItem("pasabuy_token");
     let currentDb = null;
 
     /* ---- theme (shares the key used by the DevTools page) ---- */
@@ -284,17 +223,15 @@
 
     /* ---- view switching ---- */
     function show(id) {
-      ["login-view", "menu-view", "record-view"].forEach((v) => {
+      ["menu-view", "record-view"].forEach((v) => {
         $(v).classList.toggle("view-active", v === id);
         $(v).classList.toggle("view-hidden", v !== id);
       });
     }
 
     /* ---- data ---- */
-    async function fetchDb(db, tok) {
-      const res = await fetch(`${API_URL}?db=${encodeURIComponent(db)}`, {
-        headers: { "X-Portal-Token": tok },
-      });
+    async function fetchDb(db) {
+      const res = await fetch(`${API_URL}?db=${encodeURIComponent(db)}`);
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         const err = new Error(body.error || `Request failed (${res.status})`);
@@ -327,12 +264,8 @@
         `<thead><tr>${head}<th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
     }
 
-    function lock(message) {
-      sessionStorage.removeItem("pasabuy_token");
-      token = null;
-      $("pw").value = "";
-      $("login-msg").textContent = message || "";
-      show("login-view");
+    function toLogin() {
+      location.replace("/login?next=" + encodeURIComponent(location.pathname));
     }
 
     /* ---- pricebook ---- */
@@ -449,7 +382,7 @@
       try {
         const res = await fetch(API_URL, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json", "X-Portal-Token": token },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             db: "pricebook",
             pageId,
@@ -481,12 +414,12 @@
       $("record-body").innerHTML = '<div class="state-msg">Loading…</div>';
       show("record-view");
       try {
-        const data = await fetchDb(db, token);
+        const data = await fetchDb(db);
         $("record-count").textContent = `${data.count} record${data.count === 1 ? "" : "s"}`;
         if (db === "pricebook") renderPricebook(data);
         else renderTable(data);
       } catch (err) {
-        if (err.status === 401) return lock("Session expired. Enter the password again.");
+        if (err.status === 401) return toLogin();
         $("record-body").innerHTML = `<div class="state-msg is-error">${esc(err.message)}</div>`;
       }
     }
@@ -501,30 +434,12 @@
       const label = $("record-title").textContent;
       if (currentDb) openDb(currentDb, label);
     });
-    $("logout-btn").addEventListener("click", () => lock(""));
-
-    $("login-form").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const pw = $("pw").value;
-      const btn = $("login-btn");
-      $("login-msg").textContent = "";
-      btn.disabled = true;
-      btn.textContent = "Checking…";
-      try {
-        await fetchDb("clients", pw);
-        token = pw;
-        sessionStorage.setItem("pasabuy_token", pw);
-        show("menu-view");
-      } catch (err) {
-        $("login-msg").textContent =
-          err.status === 401 ? "Wrong password." : err.message;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Unlock";
-      }
+    $("logout-btn").addEventListener("click", async () => {
+      await fetch("/api/logout", { method: "POST" }).catch(() => {});
+      location.replace("/login");
     });
 
-    show(token ? "menu-view" : "login-view");
+    show("menu-view");
     if (window.lucide) lucide.createIcons();
   </script>
 

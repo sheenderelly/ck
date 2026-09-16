@@ -76,6 +76,51 @@ const WRITABLE = {
 
 const UUID = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
 
+const encoder = new TextEncoder();
+
+function sameString(a, b) {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+function readCookie(header, name) {
+  if (!header) return null;
+  for (const part of header.split(";")) {
+    const eq = part.indexOf("=");
+    if (eq < 0) continue;
+    if (part.slice(0, eq).trim() === name) return part.slice(eq + 1).trim();
+  }
+  return null;
+}
+
+// The edge middleware already gates /api/*; this is the second lock on the same door.
+async function authorized(req, secret) {
+  if (!secret) return false;
+
+  const header = req.headers["x-portal-token"];
+  if (header && sameString(String(header), secret)) return true;
+
+  const cookie = readCookie(req.headers.cookie, "ck_session");
+  if (!cookie) return false;
+  const split = cookie.lastIndexOf(".");
+  if (split < 1) return false;
+  const expiry = cookie.slice(0, split);
+  if (!/^\d+$/.test(expiry) || Number(expiry) < Date.now()) return false;
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(expiry));
+  const expected = [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  return sameString(cookie.slice(split + 1), expected);
+}
+
 function writePayload(type, value) {
   if (value === null || value === "") {
     return type === "checkbox" ? { checkbox: false } : { [type]: null };
@@ -138,13 +183,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  if (!process.env.NOTION_API_KEY || !process.env.PORTAL_TOKEN) {
-    return res.status(500).json({ error: "Server is missing NOTION_API_KEY or PORTAL_TOKEN" });
+  // Authenticate before reporting anything about how the server is configured.
+  if (!(await authorized(req, process.env.PORTAL_TOKEN))) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const token = req.headers["x-portal-token"] || req.query.token;
-  if (token !== process.env.PORTAL_TOKEN) {
-    return res.status(401).json({ error: "Unauthorized" });
+  if (!process.env.NOTION_API_KEY) {
+    return res.status(500).json({ error: "Server is missing NOTION_API_KEY" });
   }
 
   if (req.method === "PATCH") return handleUpdate(req, res);
