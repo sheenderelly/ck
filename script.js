@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const textToolsMenu = document.getElementById('text-tools-menu');
     const salesforceToolsMenu = document.getElementById('salesforce-tools-menu');
     const nihonToolsMenu = document.getElementById('nihon-tools-menu');
-    const pasabuyToolsMenu = document.getElementById('pasabuy-tools-menu');
     const themesView = document.getElementById('themes-view');
     // Default starting menu
     let currentMenu = textToolsMenu;
@@ -108,8 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentMenu = salesforceToolsMenu;
             } else if (category === 'nihon') {
                 currentMenu = nihonToolsMenu;
-            } else if (category === 'pasabuy') {
-                currentMenu = pasabuyToolsMenu;
             } else if (category === 'themes') {
                 currentMenu = themesView;
                 initThemes();

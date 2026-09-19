@@ -1,11 +1,10 @@
 {
-  "name": "ck-pasabuy-api",
+  "name": "ck",
   "version": "1.0.0",
-  "description": "Notion API proxy for the PasaBuy portal",
+  "description": "DevTools, behind a password",
   "private": true,
   "type": "module",
   "dependencies": {
-    "@notionhq/client": "^2.2.15",
     "@vercel/edge": "^1.2.1"
   }
 }

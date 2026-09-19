@@ -346,8 +346,6 @@ blockquote {
     align-items: flex-start;
     cursor: pointer;
     transition: var(--transition);
-    text-decoration: none;
-    color: inherit;
 }
 
 .tool-card:hover {
