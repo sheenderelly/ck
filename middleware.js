@@ -3,7 +3,22 @@ import { next } from "@vercel/edge";
 export const config = { matcher: "/((?!_vercel).*)" };
 
 // Paths reachable without a session. Add entries here to make a page public.
-const PUBLIC_PATHS = new Set(["/login", "/login.html", "/api/login", "/api/logout"]);
+const PUBLIC_PATHS = new Set([
+  "/login",
+  "/login.html",
+  "/api/login",
+  "/api/logout",
+  "/qr",
+  "/qr.html",
+]);
+
+// The QR photos must be public too, or the page loads with broken images for
+// exactly the visitors it exists for.
+const PUBLIC_PREFIXES = ["/qr/"];
+
+function isPublic(path) {
+  return PUBLIC_PATHS.has(path) || PUBLIC_PREFIXES.some((p) => path.startsWith(p));
+}
 
 const COOKIE = "ck_session";
 const NO_STORE = "no-store, no-cache, must-revalidate";
@@ -52,7 +67,7 @@ export default async function middleware(request) {
   const url = new URL(request.url);
   const path = url.pathname;
 
-  if (PUBLIC_PATHS.has(path)) return next();
+  if (isPublic(path)) return next();
 
   const secret = process.env.PORTAL_TOKEN;
   if (!secret) {

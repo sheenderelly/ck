@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photos</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Self-contained on purpose: this page is public, and style.css is behind
+       the password — linking it would leave visitors with an unstyled page. */
+    :root {
+      --bg: #faf7f2;
+      --surface: #ffffff;
+      --edge: #e6ded2;
+      --ink: #2b2a27;
+      --muted: #8d8579;
+      --accent: #d3252b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Poppins', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    header {
+      padding: 1.6rem 1rem 1.1rem;
+      text-align: center;
+      border-bottom: 1px solid var(--edge);
+    }
+
+    h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+    .sub { color: var(--muted); font-size: 0.8rem; margin-top: 0.15rem; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 1.1rem 1rem 3rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .shot {
+      appearance: none;
+      border: 1px solid var(--edge);
+      padding: 0;
+      margin: 0;
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--surface);
+      cursor: zoom-in;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .shot:hover { transform: translateY(-2px); box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.4); }
+    .shot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .caption {
+      margin-top: 0.35rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
+    .empty {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed var(--edge);
+      border-radius: 10px;
+      font-size: 0.85rem;
+    }
+
+    /* Lightbox */
+    .lb {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(12, 12, 11, 0.93);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3.5rem 0.75rem 4rem;
+    }
+
+    .lb[hidden] { display: none; }
+
+    .lb img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 6px;
+      background: var(--surface);
+    }
+
+    .lb-cap {
+      position: absolute;
+      left: 50%;
+      bottom: 1rem;
+      transform: translateX(-50%);
+      max-width: 90vw;
+      text-align: center;
+      color: #f4f1ec;
+      font-size: 0.8rem;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    }
+
+    .lb-btn {
+      position: absolute;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      border-radius: 50%;
+      width: 2.6rem;
+      height: 2.6rem;
+      font-size: 1.35rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .lb-btn:hover { background: rgba(255, 255, 255, 0.24); }
+    .lb-close { top: 0.85rem; right: 0.85rem; }
+    .lb-prev { left: 0.6rem; top: 50%; transform: translateY(-50%); }
+    .lb-next { right: 0.6rem; top: 50%; transform: translateY(-50%); }
+    .lb-btn[hidden] { display: none; }
+
+    @media (max-width: 420px) {
+      .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.55rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Photos</h1>
+    <div class="sub">Tap any photo to view it full size</div>
+  </header>
+
+  <main>
+    <div id="grid"></div>
+  </main>
+
+  <div class="lb" id="lb" hidden>
+    <button class="lb-btn lb-close" id="lb-close" aria-label="Close">×</button>
+    <button class="lb-btn lb-prev" id="lb-prev" aria-label="Previous">‹</button>
+    <img id="lb-img" alt="">
+    <button class="lb-btn lb-next" id="lb-next" aria-label="Next">›</button>
+    <div class="lb-cap" id="lb-cap"></div>
+  </div>
+
+  <script>
+    // Add photos by dropping the file into /qr/ and adding a line here.
+    const PHOTOS = [
+      // { src: "/qr/example.jpg", caption: "Example" },
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (v) =>
+      String(v).replace(/[&<>"']/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
+      );
+
+    if (!PHOTOS.length) {
+      $("grid").innerHTML = '<div class="empty">No photos yet.</div>';
+    } else {
+      $("grid").className = "grid";
+      $("grid").innerHTML = PHOTOS.map(
+        (p, i) => `<figure>
+          <button class="shot" data-i="${i}" aria-label="View ${esc(p.caption || "photo " + (i + 1))}">
+            <img src="${esc(p.src)}" alt="${esc(p.caption || "")}" loading="lazy">
+          </button>
+          ${p.caption ? `<figcaption class="caption">${esc(p.caption)}</figcaption>` : ""}
+        </figure>`
+      ).join("");
+      document.querySelectorAll(".shot").forEach((el) =>
+        el.addEventListener("click", () => open(Number(el.dataset.i)))
+      );
+    }
+
+    let at = 0;
+
+    function open(i) {
+      at = i;
+      paint();
+      $("lb").hidden = false;
+      document.body.style.overflow = "hidden";
+      $("lb-close").focus();
+    }
+
+    function close() {
+      $("lb").hidden = true;
+      $("lb-img").src = "";
+      document.body.style.overflow = "";
+    }
+
+    function paint() {
+      const p = PHOTOS[at];
+      if (!p) return close();
+      $("lb-img").src = p.src;
+      $("lb-img").alt = p.caption || "";
+      $("lb-cap").textContent = p.caption || "";
+      const many = PHOTOS.length > 1;
+      $("lb-prev").hidden = !many;
+      $("lb-next").hidden = !many;
+    }
+
+    const step = (d) => { at = (at + d + PHOTOS.length) % PHOTOS.length; paint(); };
+
+    $("lb-close").addEventListener("click", close);
+    $("lb-prev").addEventListener("click", () => step(-1));
+    $("lb-next").addEventListener("click", () => step(1));
+    $("lb").addEventListener("click", (e) => { if (e.target === $("lb")) close(); });
+
+    document.addEventListener("keydown", (e) => {
+      if ($("lb").hidden) return;
+      if (e.key === "Escape") close();
+      if (e.key === "ArrowLeft") step(-1);
+      if (e.key === "ArrowRight") step(1);
+    });
+
+    // Swiping between photos matters more here than anywhere else: this page is
+    // reached by scanning a code, so almost every visitor is on a phone.
+    let startX = null;
+    $("lb").addEventListener("touchstart", (e) => { startX = e.changedTouches[0].clientX; }, { passive: true });
+    $("lb").addEventListener("touchend", (e) => {
+      if (startX === null || PHOTOS.length < 2) return;
+      const dx = e.changedTouches[0].clientX - startX;
+      if (Math.abs(dx) > 45) step(dx < 0 ? 1 : -1);
+      startX = null;
+    }, { passive: true });
+  </script>
+
+</body>
+</html>
