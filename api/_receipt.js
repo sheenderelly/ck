@@ -1,6 +1,6 @@
-// The receipt layout, kept free of Notion and of @vercel/og so it can be
-// rendered straight through satori in tests. Files under api/ that start with
-// an underscore are not routes.
+// The receipt layout, kept free of Notion and of the renderer so it can be
+// exercised on its own in tests. Files under api/ that start with an
+// underscore are not routes.
 
 // Matches the rest of the site: cream paper, the red accent, ink and a muted grey.
 const PAPER = "#faf7f2";
@@ -30,9 +30,16 @@ export function peso(v) {
 
 // There is no emoji font either, so "🧾 unpaid" would draw a blank box. The
 // statuses read fine as plain words.
+//
+// ™, © and ® are classed as emoji but are ordinary text symbols that Poppins
+// has, and product names use them ("ROIHI-TSUBOKO™"), so they are kept.
+const KEEP = new Set(["™", "©", "®"]);
+
 export function deEmoji(text) {
   return String(text ?? "")
-    .replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}️‍]/gu, "")
+    .replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}️‍]/gu, (ch) =>
+      KEEP.has(ch) ? ch : ""
+    )
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -66,7 +73,7 @@ function cell(value, width, align = "left", style = {}) {
 }
 
 function heading(label, width, align) {
-  return cell(label, width, align, { fontSize: 12, color: MUTED, letterSpacing: 1.2 });
+  return cell(label, width, align, { fontSize: 12, color: MUTED, letterSpacing: 1.2, fontWeight: 600 });
 }
 
 function totalRow(label, value, { strong = false, accent = false } = {}) {
@@ -75,12 +82,14 @@ function totalRow(label, value, { strong = false, accent = false } = {}) {
       fontSize: strong ? 20 : 16,
       color: strong ? INK : MUTED,
       marginRight: 24,
+      fontWeight: strong ? 600 : 400,
     }),
     text(value, {
       width: 210,
       justifyContent: "flex-end",
       fontSize: strong ? 28 : 16,
       color: accent ? ACCENT : INK,
+      fontWeight: strong ? 600 : 400,
     }),
   ]);
 }
@@ -101,7 +110,7 @@ export function receipt(data) {
         cell(clip(l["product name"], 62), COL_ITEM, "left", { lineHeight: 1.3, paddingRight: 16 }),
         cell(String(num(l.qty) || 1), COL_QTY, "center", { color: MUTED }),
         cell(peso(l["list price"]), COL_PRICE, "right", { color: MUTED }),
-        cell(peso(l.amount), COL_AMOUNT, "right"),
+        cell(peso(l.amount), COL_AMOUNT, "right", { fontWeight: 600 }),
       ]
     )
   );
@@ -126,15 +135,15 @@ export function receipt(data) {
       height: "100%",
       backgroundColor: PAPER,
       padding: PAD,
-      fontFamily: "sans-serif",
+      fontFamily: "Poppins",
       color: INK,
     },
     [
       // Header
       h("div", row({ justifyContent: "space-between", alignItems: "flex-start" }), [
         h("div", { display: "flex", flexDirection: "column" }, [
-          text("RECEIPT", { fontSize: 36, letterSpacing: 3 }),
-          text(data.number, { fontSize: 21, color: ACCENT, marginTop: 6 }),
+          text("RECEIPT", { fontSize: 36, letterSpacing: 3, fontWeight: 600 }),
+          text(data.number, { fontSize: 21, color: ACCENT, marginTop: 6, fontWeight: 600 }),
         ]),
         h("div", { display: "flex", flexDirection: "column", alignItems: "flex-end" }, [
           text(data.status || "", {
@@ -161,7 +170,7 @@ export function receipt(data) {
         [
           h("div", { display: "flex", flexDirection: "column" }, [
             text("BILLED TO", { fontSize: 12, color: MUTED, letterSpacing: 1.5 }),
-            text(clip(data.buyer, 40) || "—", { fontSize: 23, marginTop: 6 }),
+            text(clip(data.buyer, 40) || "—", { fontSize: 23, marginTop: 6, fontWeight: 600 }),
           ]),
           h("div", { display: "flex", flexDirection: "column", alignItems: "flex-end" }, [
             text("DATE", { fontSize: 12, color: MUTED, letterSpacing: 1.5 }),

@@ -1,7 +1,12 @@
-import { ImageResponse } from "@vercel/og";
+import satori from "satori";
+import { Resvg } from "@resvg/resvg-js";
 import { receipt, heightFor, deEmoji, num, WIDTH } from "./_receipt.js";
+import { FONTS } from "./_fonts.js";
 
-export const config = { runtime: "edge" };
+// Deliberately the Node runtime, not Edge: @vercel/og cannot be bundled for an
+// Edge Function outside Next.js ("referencing unsupported modules"), and this
+// pair does the same job — satori lays the receipt out as SVG, resvg
+// rasterises it — with a native binary instead of wasm.
 
 const NOTION = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
@@ -10,11 +15,14 @@ const LINES_DB = "2d90e47d-8033-801a-9cb9-c07e9bb6d3a3";
 
 const NO_STORE = "no-store, no-cache, must-revalidate";
 
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "content-type": "application/json", "cache-control": NO_STORE },
+// Renders the receipt to PNG bytes. Exported so tests can call it directly.
+export async function renderReceipt(data) {
+  const svg = await satori(receipt(data), {
+    width: WIDTH,
+    height: heightFor(data),
+    fonts: FONTS,
   });
+  return Buffer.from(new Resvg(svg).render().asPng());
 }
 
 async function notion(path, body) {
@@ -134,11 +142,13 @@ async function loadInvoice(number) {
   return toReceipt(inv, linePages.results.map(props), buyer, page.created_time);
 }
 
-export default async function handler(request) {
-  const url = new URL(request.url);
+export default async function handler(req, res) {
+  res.setHeader("Cache-Control", NO_STORE);
+
+  const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
 
   if (!process.env.NOTION_API_KEY) {
-    return json({ error: "NOTION_API_KEY is not configured" }, 500);
+    return res.status(500).json({ error: "NOTION_API_KEY is not configured" });
   }
 
   try {
@@ -159,29 +169,21 @@ export default async function handler(request) {
           };
         })
         .filter((i) => i.number);
-      return json({ invoices });
+      return res.status(200).json({ invoices });
     }
 
     const number = url.searchParams.get("inv");
-    if (!number) return json({ error: "Pass ?inv=INV0001 or ?list=1" }, 400);
+    if (!number) return res.status(400).json({ error: "Pass ?inv=INV0001 or ?list=1" });
 
     const data = await loadInvoice(number);
-    if (!data) return json({ error: `No invoice named ${number}` }, 404);
+    if (!data) return res.status(404).json({ error: `No invoice named ${number}` });
 
-    const image = new ImageResponse(receipt(data), {
-      width: WIDTH,
-      height: heightFor(data),
-    });
+    const png = await renderReceipt(data);
 
-    // ImageResponse sets its own headers, so rebuild the response to add ours.
-    return new Response(image.body, {
-      headers: {
-        "content-type": "image/png",
-        "cache-control": NO_STORE,
-        "content-disposition": `inline; filename="${data.number || "receipt"}.png"`,
-      },
-    });
+    res.setHeader("Content-Type", "image/png");
+    res.setHeader("Content-Disposition", `inline; filename="${data.number || "receipt"}.png"`);
+    return res.status(200).end(png);
   } catch (err) {
-    return json({ error: String(err?.message ?? err) }, 502);
+    return res.status(502).json({ error: String(err?.message ?? err) });
   }
 }
