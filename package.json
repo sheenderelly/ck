@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@vercel/edge": "^1.2.1"
+    "@vercel/edge": "^1.2.1",
+    "@vercel/og": "^1.0.3"
   }
 }
