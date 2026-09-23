@@ -101,8 +101,9 @@
     text(ctx, label, x + w / 2, y + 21, { size: 15, color: "#fff", align: "center" });
   }
 
-  // Header block down to the rule under the column headings.
-  var HEAD_H = 234;
+  // The billed-to block is capped well short of the date column, so a long
+  // address wraps instead of running into the date.
+  var BUYER_W = 480;
   var TOTALS_GAP = 34;
   var ROW_STRONG = 44;
   var ROW_PLAIN = 32;
@@ -118,16 +119,49 @@
     return a;
   }
 
+  // The billed-to block as a list of {text, size, weight, color, gap}, where
+  // gap is the distance down to the next baseline. Needs a context to measure
+  // the address against BUYER_W.
+  function buyerBlock(ctx, data) {
+    var out = [{ text: data.buyer || "—", size: 23, weight: 600, gap: 26 }];
+
+    if (data.receiver && data.receiver !== data.buyer) {
+      out.push({ text: "Attn: " + data.receiver, size: 15, color: MUTED, gap: 24 });
+    }
+    if (data.address) {
+      ctx.font = font(14, 400);
+      wrap(ctx, data.address, BUYER_W, 3).forEach(function (line, i) {
+        out.push({ text: line, size: 14, color: MUTED, gap: i === 0 ? 22 : 19 });
+      });
+    }
+    if (data.phone) {
+      out.push({ text: data.phone, size: 14, color: MUTED, gap: 22 });
+    }
+    return out;
+  }
+
+  function blockHeight(block) {
+    return block.reduce(function (sum, item) { return sum + item.gap; }, 0);
+  }
+
   // Mirrors exactly how draw() walks down the page, minus the trailing advance
   // after the final total — otherwise the footer floats away from the content.
-  function heightFor(data) {
+  function heightFor(data, ctx) {
     var lines = (data.lines || []).length;
-    return HEAD_H + lines * ROW_H + TOTALS_GAP + totalsAdvance(data) - ROW_STRONG + FOOT_H;
+    var head = 150 + blockHeight(buyerBlock(ctx || scratch(), data)) + 18 + 28 + 12;
+    return head + lines * ROW_H + TOTALS_GAP + totalsAdvance(data) - ROW_STRONG + FOOT_H;
+  }
+
+  // A throwaway context purely for measuring text before the real canvas is
+  // sized, since resizing a canvas resets its state.
+  function scratch() {
+    return document.createElement("canvas").getContext("2d");
   }
 
   function draw(canvas, data) {
     var lines = data.lines || [];
-    var height = heightFor(data);
+    var block = buyerBlock(scratch(), data);
+    var height = heightFor(data, scratch());
 
     canvas.width = W * SCALE;
     canvas.height = height * SCALE;
@@ -151,9 +185,15 @@
     y += 44;
     text(ctx, "BILLED TO", PAD, y, { size: 12, color: MUTED, spacing: 1.5 });
     text(ctx, "DATE", X_RIGHT, y, { size: 12, color: MUTED, align: "right", spacing: 1.5 });
-    y += 26;
-    text(ctx, data.buyer || "—", PAD, y, { size: 23, weight: 600 });
-    if (data.date) text(ctx, data.date, X_RIGHT, y, { size: 17, align: "right" });
+
+    block.forEach(function (item) {
+      y += item.gap;
+      text(ctx, item.text, PAD, y, { size: item.size, weight: item.weight, color: item.color });
+      // The date sits beside the first line of the block, never over it.
+      if (item === block[0] && data.date) {
+        text(ctx, data.date, X_RIGHT, y, { size: 17, align: "right" });
+      }
+    });
 
     y += 18;
     rule(ctx, y, INK, 2);

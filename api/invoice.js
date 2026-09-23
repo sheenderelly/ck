@@ -65,6 +65,10 @@ export function val(prop) {
       return prop.status?.name ?? null;
     case "url":
       return prop.url;
+    case "phone_number":
+      return prop.phone_number;
+    case "email":
+      return prop.email;
     case "unique_id":
       return prop.unique_id?.number ?? null;
     case "relation":
@@ -92,8 +96,28 @@ export function props(page) {
   return out;
 }
 
+// The client row holds Name, receiver, address and phone. Pick them by name
+// and type rather than taking whichever string property happens to come first
+// — that landed the address in the name slot.
+export function toClient(page) {
+  if (!page) return { name: "", receiver: "", address: "", phone: "" };
+  const entries = Object.entries(page.properties ?? {});
+  const titleEntry = entries.find(([, p]) => p?.type === "title");
+  const pick = (name) => {
+    const found = entries.find(([k]) => k.toLowerCase() === name);
+    return found ? deEmoji(val(found[1])) : "";
+  };
+  return {
+    name: deEmoji(titleEntry ? val(titleEntry[1]) : ""),
+    receiver: pick("receiver"),
+    address: pick("address"),
+    phone: pick("phone"),
+  };
+}
+
 // Shapes one invoice plus its lines into what the canvas expects.
 export function toReceipt(inv, lines, buyer, createdTime) {
+  const client = typeof buyer === "string" ? { name: buyer } : buyer ?? {};
   // Prefer Notion's own formulas, but never send a blank total if one is missing.
   const subtotal = num(inv.subtotal ?? lines.reduce((sum, l) => sum + num(l.amount), 0));
   const shipping = num(inv["shipping fee"]);
@@ -104,7 +128,10 @@ export function toReceipt(inv, lines, buyer, createdTime) {
     number: inv.invoice ?? "",
     batch: deEmoji(inv.batch),
     status: deEmoji(inv["buyer status"]),
-    buyer: deEmoji(buyer),
+    buyer: deEmoji(client.name),
+    receiver: deEmoji(client.receiver),
+    address: deEmoji(client.address),
+    phone: deEmoji(client.phone),
     date: asDate(createdTime),
     lines: lines.map((l) => ({
       "product name": deEmoji(l["product name"]),
@@ -135,14 +162,10 @@ async function loadInvoice(number) {
     page_size: 100,
   });
 
-  let buyer = "";
   const buyerId = inv.buyer?.[0];
-  if (buyerId) {
-    const buyerPage = await notion(`/pages/${buyerId}`);
-    buyer = Object.values(props(buyerPage)).find((v) => typeof v === "string" && v) ?? "";
-  }
+  const client = buyerId ? toClient(await notion(`/pages/${buyerId}`)) : null;
 
-  return toReceipt(inv, linePages.results.map(props), buyer, page.created_time);
+  return toReceipt(inv, linePages.results.map(props), client, page.created_time);
 }
 
 export default async function handler(req, res) {
