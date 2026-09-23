@@ -1,12 +1,28 @@
-import satori from "satori";
-import { Resvg } from "@resvg/resvg-js";
 import { receipt, heightFor, deEmoji, num, WIDTH } from "./_receipt.js";
 import { FONTS } from "./_fonts.js";
 
 // Deliberately the Node runtime, not Edge: @vercel/og cannot be bundled for an
 // Edge Function outside Next.js ("referencing unsupported modules"), and this
 // pair does the same job — satori lays the receipt out as SVG, resvg
-// rasterises it — with a native binary instead of wasm.
+// rasterises it.
+//
+// They are imported lazily rather than at module load because both carry
+// runtime assets (satori a wasm file, resvg a native binary) that a bundler
+// can fail to include. At module load that failure is an uncatchable crash —
+// an opaque FUNCTION_INVOCATION_FAILED. In here it becomes a message that
+// names the module, and the invoice list keeps working regardless.
+let renderer = null;
+
+async function getRenderer() {
+  if (renderer) return renderer;
+  try {
+    const [satori, resvg] = await Promise.all([import("satori"), import("@resvg/resvg-js")]);
+    renderer = { satori: satori.default, Resvg: resvg.Resvg };
+    return renderer;
+  } catch (err) {
+    throw new Error(`Image renderer unavailable: ${err?.message ?? err}`);
+  }
+}
 
 const NOTION = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
@@ -17,6 +33,7 @@ const NO_STORE = "no-store, no-cache, must-revalidate";
 
 // Renders the receipt to PNG bytes. Exported so tests can call it directly.
 export async function renderReceipt(data) {
+  const { satori, Resvg } = await getRenderer();
   const svg = await satori(receipt(data), {
     width: WIDTH,
     height: heightFor(data),
@@ -146,6 +163,25 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", NO_STORE);
 
   const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
+
+  // Renders a fixed receipt without touching Notion, to tell a renderer
+  // problem apart from a data one.
+  if (url.searchParams.has("diag")) {
+    const report = { node: process.version, hasNotionKey: !!process.env.NOTION_API_KEY };
+    try {
+      const png = await renderReceipt({
+        number: "DIAG", batch: "", status: "paid", buyer: "Test Buyer", date: "1 Jan 2026",
+        lines: [{ "product name": "Test item", qty: 1, "list price": 100, amount: 100 }],
+        subtotal: 100, shipping: 0, total: 100, paid: 100, balance: 0,
+      });
+      report.renderer = "ok";
+      report.pngBytes = png.length;
+    } catch (err) {
+      report.renderer = "failed";
+      report.error = String(err?.message ?? err);
+    }
+    return res.status(200).json(report);
+  }
 
   if (!process.env.NOTION_API_KEY) {
     return res.status(500).json({ error: "NOTION_API_KEY is not configured" });
