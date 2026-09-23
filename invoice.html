@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Receipts</title>
+<link rel="stylesheet" href="/receipt-fonts.css">
 <style>
   :root {
     --bg: #faf7f2;
@@ -72,7 +73,7 @@
   .inv .amt { font-size: .9rem; white-space: nowrap; }
 
   .stage { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--panel); padding: 1.25rem; min-height: 300px; }
-  .stage img { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--rule); }
+  .stage canvas { width: 100%; height: auto; display: block; border-radius: 8px; border: 1px solid var(--rule); }
   .actions { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem; }
   .btn {
     padding: .65rem 1.1rem;
@@ -113,6 +114,7 @@
   </div>
 </div>
 
+<script src="/receipt-draw.js"></script>
 <script>
 (function () {
   var listEl = document.getElementById('list');
@@ -173,47 +175,76 @@
   function show(number) {
     current = number;
     render();
-    note('Building ' + number + '…');
+    note('Building ' + number + '\u2026');
 
-    // Fetched as a blob so the same bytes can be previewed and saved, and so a
-    // failure shows its message instead of a broken image.
     fetch('/api/invoice?inv=' + encodeURIComponent(number), { credentials: 'same-origin' })
       .then(function (res) {
-        if (!res.ok) {
-          return res.json()
-            .catch(function () { return { error: 'Request failed (' + res.status + ')' }; })
-            .then(function (body) { throw new Error(body.error || 'Request failed'); });
-        }
-        return res.blob();
+        return res.json().then(function (body) {
+          if (!res.ok) throw new Error(body.error || 'Request failed (' + res.status + ')');
+          return body;
+        });
       })
-      .then(function (blob) {
+      // The embedded font must be loaded before drawing, or the first receipt
+      // is measured and painted in a fallback face.
+      .then(function (data) {
+        var ready = document.fonts && document.fonts.load
+          ? Promise.all([
+              document.fonts.load('400 17px ReceiptPoppins'),
+              document.fonts.load('600 17px ReceiptPoppins')
+            ]).catch(function () {})
+          : Promise.resolve();
+        return ready.then(function () { return data; });
+      })
+      .then(function (data) {
         if (current !== number) return; // a later click won
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
-        blobUrl = URL.createObjectURL(blob);
 
         stageEl.innerHTML = '';
-        var img = document.createElement('img');
-        img.src = blobUrl;
-        img.alt = 'Receipt for ' + number;
-        stageEl.appendChild(img);
+        var canvas = document.createElement('canvas');
+        canvas.setAttribute('role', 'img');
+        canvas.setAttribute('aria-label', 'Receipt for ' + number);
+        stageEl.appendChild(canvas);
+        ReceiptDraw.draw(canvas, data);
 
         var actions = document.createElement('div');
         actions.className = 'actions';
 
         var dl = document.createElement('a');
         dl.className = 'btn';
-        dl.href = blobUrl;
-        dl.download = number + '.png';
         dl.textContent = 'Save image';
+        dl.href = '#';
+        dl.setAttribute('download', number + '.png');
+        dl.addEventListener('click', function (e) {
+          e.preventDefault();
+          canvas.toBlob(function (blob) {
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            blobUrl = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = number + '.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }, 'image/png');
+        });
         actions.appendChild(dl);
 
-        var open = document.createElement('a');
-        open.className = 'btn secondary';
-        open.href = '/api/invoice?inv=' + encodeURIComponent(number);
-        open.target = '_blank';
-        open.rel = 'noopener';
-        open.textContent = 'Open in new tab';
-        actions.appendChild(open);
+        var copy = document.createElement('button');
+        copy.className = 'btn secondary';
+        copy.type = 'button';
+        copy.textContent = 'Copy image';
+        copy.addEventListener('click', function () {
+          canvas.toBlob(function (blob) {
+            if (!navigator.clipboard || !window.ClipboardItem) {
+              copy.textContent = 'Not supported';
+              return;
+            }
+            navigator.clipboard
+              .write([new ClipboardItem({ 'image/png': blob })])
+              .then(function () { copy.textContent = 'Copied'; })
+              .catch(function () { copy.textContent = 'Copy failed'; });
+          }, 'image/png');
+        });
+        actions.appendChild(copy);
 
         stageEl.appendChild(actions);
       })

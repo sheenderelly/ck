@@ -5,9 +5,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@resvg/resvg-js": "^2.6.2",
-    "@vercel/edge": "^1.2.1",
-    "satori": "^0.33.5"
+    "@vercel/edge": "^1.2.1"
   },
   "devDependencies": {
     "@fontsource/poppins": "^5.3.0"

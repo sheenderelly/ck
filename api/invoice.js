@@ -1,28 +1,6 @@
-import { receipt, heightFor, deEmoji, num, WIDTH } from "./_receipt.js";
-import { FONTS } from "./_fonts.js";
-
-// Deliberately the Node runtime, not Edge: @vercel/og cannot be bundled for an
-// Edge Function outside Next.js ("referencing unsupported modules"), and this
-// pair does the same job — satori lays the receipt out as SVG, resvg
-// rasterises it.
-//
-// They are imported lazily rather than at module load because both carry
-// runtime assets (satori a wasm file, resvg a native binary) that a bundler
-// can fail to include. At module load that failure is an uncatchable crash —
-// an opaque FUNCTION_INVOCATION_FAILED. In here it becomes a message that
-// names the module, and the invoice list keeps working regardless.
-let renderer = null;
-
-async function getRenderer() {
-  if (renderer) return renderer;
-  try {
-    const [satori, resvg] = await Promise.all([import("satori"), import("@resvg/resvg-js")]);
-    renderer = { satori: satori.default, Resvg: resvg.Resvg };
-    return renderer;
-  } catch (err) {
-    throw new Error(`Image renderer unavailable: ${err?.message ?? err}`);
-  }
-}
+// Reads invoices from Notion and returns them as JSON. The receipt image is
+// drawn in the browser (see receipt-draw.js), so this function has no image
+// renderer to bundle — nothing here carries a wasm file or a native binary.
 
 const NOTION = "https://api.notion.com/v1";
 const NOTION_VERSION = "2022-06-28";
@@ -31,15 +9,31 @@ const LINES_DB = "2d90e47d-8033-801a-9cb9-c07e9bb6d3a3";
 
 const NO_STORE = "no-store, no-cache, must-revalidate";
 
-// Renders the receipt to PNG bytes. Exported so tests can call it directly.
-export async function renderReceipt(data) {
-  const { satori, Resvg } = await getRenderer();
-  const svg = await satori(receipt(data), {
-    width: WIDTH,
-    height: heightFor(data),
-    fonts: FONTS,
-  });
-  return Buffer.from(new Resvg(svg).render().asPng());
+export const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+
+// The canvas font has no emoji, so "🧾 unpaid" would draw a blank box.
+// ™, © and ® are classed as emoji but are ordinary symbols the font has, and
+// product names use them ("ROIHI-TSUBOKO™"), so they are kept.
+const KEEP = new Set(["™", "©", "®"]);
+
+export function deEmoji(text) {
+  return String(text ?? "")
+    .replace(/[\p{Extended_Pictographic}\p{Emoji_Modifier}️‍]/gu, (ch) =>
+      KEEP.has(ch) ? ch : ""
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// Spelled out rather than via toLocaleDateString, whose month abbreviations
+// vary between runtimes ("Sep" here, "Sept" there).
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function asDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
 async function notion(path, body) {
@@ -98,22 +92,9 @@ export function props(page) {
   return out;
 }
 
-// Invoices carry no date property, so the receipt dates itself by when the
-// invoice row was created.
-// Spelled out rather than via toLocaleDateString, whose month abbreviations
-// vary between runtimes ("Sep" here, "Sept" there).
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-function asDate(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
-}
-
-// Shapes one invoice plus its lines into what the layout expects.
+// Shapes one invoice plus its lines into what the canvas expects.
 export function toReceipt(inv, lines, buyer, createdTime) {
-  // Prefer Notion's own formulas, but never render a blank total if one is missing.
+  // Prefer Notion's own formulas, but never send a blank total if one is missing.
   const subtotal = num(inv.subtotal ?? lines.reduce((sum, l) => sum + num(l.amount), 0));
   const shipping = num(inv["shipping fee"]);
   const total = num(inv["total amount"] ?? subtotal + shipping);
@@ -123,9 +104,14 @@ export function toReceipt(inv, lines, buyer, createdTime) {
     number: inv.invoice ?? "",
     batch: deEmoji(inv.batch),
     status: deEmoji(inv["buyer status"]),
-    buyer: buyer ?? "",
+    buyer: deEmoji(buyer),
     date: asDate(createdTime),
-    lines,
+    lines: lines.map((l) => ({
+      "product name": deEmoji(l["product name"]),
+      qty: num(l.qty),
+      "list price": num(l["list price"]),
+      amount: num(l.amount),
+    })),
     subtotal,
     shipping,
     total,
@@ -164,25 +150,6 @@ export default async function handler(req, res) {
 
   const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`);
 
-  // Renders a fixed receipt without touching Notion, to tell a renderer
-  // problem apart from a data one.
-  if (url.searchParams.has("diag")) {
-    const report = { node: process.version, hasNotionKey: !!process.env.NOTION_API_KEY };
-    try {
-      const png = await renderReceipt({
-        number: "DIAG", batch: "", status: "paid", buyer: "Test Buyer", date: "1 Jan 2026",
-        lines: [{ "product name": "Test item", qty: 1, "list price": 100, amount: 100 }],
-        subtotal: 100, shipping: 0, total: 100, paid: 100, balance: 0,
-      });
-      report.renderer = "ok";
-      report.pngBytes = png.length;
-    } catch (err) {
-      report.renderer = "failed";
-      report.error = String(err?.message ?? err);
-    }
-    return res.status(200).json(report);
-  }
-
   if (!process.env.NOTION_API_KEY) {
     return res.status(500).json({ error: "NOTION_API_KEY is not configured" });
   }
@@ -214,11 +181,7 @@ export default async function handler(req, res) {
     const data = await loadInvoice(number);
     if (!data) return res.status(404).json({ error: `No invoice named ${number}` });
 
-    const png = await renderReceipt(data);
-
-    res.setHeader("Content-Type", "image/png");
-    res.setHeader("Content-Disposition", `inline; filename="${data.number || "receipt"}.png"`);
-    return res.status(200).end(png);
+    return res.status(200).json(data);
   } catch (err) {
     return res.status(502).json({ error: String(err?.message ?? err) });
   }
