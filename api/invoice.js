@@ -147,6 +147,50 @@ export function toReceipt(inv, lines, buyer, createdTime) {
   };
 }
 
+// Notion's API can filter a status by option name but not by group, so the
+// group members are read off the schema. Deriving them means renaming or
+// adding a status in Notion does not silently break the filter.
+export function completeOptionsFrom(database) {
+  const out = {};
+  for (const [name, prop] of Object.entries(database?.properties ?? {})) {
+    if (prop?.type !== "status") continue;
+    const group = (prop.status?.groups ?? []).find((g) => /^complete/i.test(g.name ?? ""));
+    if (!group) continue;
+    const ids = new Set(group.option_ids ?? []);
+    out[name] = (prop.status?.options ?? []).filter((o) => ids.has(o.id)).map((o) => o.name);
+  }
+  return out;
+}
+
+// Keeps only invoices where BOTH the buyer and the seller side are still
+// outside their Complete group. An invoice with no status set is not complete,
+// and does_not_equal keeps it.
+export function pendingFilter(complete) {
+  const clauses = [];
+  for (const [property, names] of Object.entries(complete)) {
+    for (const name of names) clauses.push({ property, status: { does_not_equal: name } });
+  }
+  return clauses.length ? { and: clauses } : undefined;
+}
+
+// Walks every page of a query, so a long back catalogue cannot push pending
+// invoices off the end of the first 100.
+async function queryAll(dbId, body, maxPages = 10) {
+  const results = [];
+  let cursor;
+  for (let i = 0; i < maxPages; i++) {
+    const page = await notion(`/databases/${dbId}/query`, {
+      ...body,
+      page_size: 100,
+      ...(cursor ? { start_cursor: cursor } : {}),
+    });
+    results.push(...page.results);
+    if (!page.has_more || !page.next_cursor) break;
+    cursor = page.next_cursor;
+  }
+  return results;
+}
+
 async function loadInvoice(number) {
   const found = await notion(`/databases/${INVOICES_DB}/query`, {
     filter: { property: "invoice", title: { equals: number } },
@@ -178,17 +222,20 @@ export default async function handler(req, res) {
   }
 
   try {
-    // The picker needs a list of invoices to choose from.
+    // The picker lists only invoices still open on both sides — anything the
+    // buyer has paid for and the seller has handed over is done with.
     if (url.searchParams.has("list")) {
-      const page = await notion(`/databases/${INVOICES_DB}/query`, {
+      const complete = completeOptionsFrom(await notion(`/databases/${INVOICES_DB}`));
+      const results = await queryAll(INVOICES_DB, {
+        filter: pendingFilter(complete),
         sorts: [{ property: "invoice", direction: "descending" }],
-        page_size: 100,
       });
-      const invoices = page.results
+      const invoices = results
         .map((p) => {
           const inv = props(p);
           return {
             number: inv.invoice,
+            sellerStatus: deEmoji(inv["seller status"]),
             batch: deEmoji(inv.batch),
             status: deEmoji(inv["buyer status"]),
             total: num(inv["total amount"] ?? inv.subtotal),

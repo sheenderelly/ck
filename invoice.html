@@ -84,7 +84,7 @@
     </div>
     <div>
       <h2>Receipts</h2>
-      <p class="hint">Pick an invoice, then save the image and send it to the buyer.</p>
+      <p class="hint">Open invoices only — those still unpaid or not yet handed over. Pick one, then save the image and send it to the buyer.</p>
     </div>
 
     <div class="filter-row">
@@ -135,7 +135,7 @@
     var term = qEl.value.trim().toLowerCase();
     var shown = invoices.filter(function (i) {
       if (!term) return true;
-      return [i.number, i.batch, i.status].join(' ').toLowerCase().indexOf(term) > -1;
+      return [i.number, i.batch, i.status, i.sellerStatus].join(' ').toLowerCase().indexOf(term) > -1;
     });
 
     if (!shown.length) {
@@ -156,7 +156,7 @@
       no.textContent = i.number;
       var meta = document.createElement('div');
       meta.className = 'meta';
-      meta.textContent = [i.status, i.batch].filter(Boolean).join(' · ');
+      meta.textContent = [i.status, i.sellerStatus, i.batch].filter(Boolean).join(' · ');
       left.appendChild(no);
       left.appendChild(meta);
 
@@ -265,7 +265,7 @@
     .then(function (body) {
       invoices = body.invoices || [];
       if (!invoices.length) {
-        listEl.innerHTML = '<p class="hint" style="padding:1rem;margin:0">No invoices found.</p>';
+        listEl.innerHTML = '<p class="hint" style="padding:1rem;margin:0">Nothing open \u2014 every invoice is paid and handed over.</p>';
         return;
       }
       render();
