@@ -4,21 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>Receipts</title>
+<title>Orders</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/style.css">
-<link rel="stylesheet" href="/receipt-fonts.css">
+<link rel="stylesheet" href="/order-fonts.css">
 <style>
   /* Only what the shared stylesheet has no opinion about. */
-  .receipt-layout {
+  .order-layout {
     display: grid;
     grid-template-columns: 300px 1fr;
     gap: 1.5rem;
     align-items: start;
   }
-  @media (max-width: 800px) { .receipt-layout { grid-template-columns: 1fr; } }
+  @media (max-width: 800px) { .order-layout { grid-template-columns: 1fr; } }
 
   .inv-list { padding: 0; overflow: hidden; }
   .inv {
@@ -83,7 +83,7 @@
       <a class="btn btn-secondary" href="/">&larr; Tools</a>
     </div>
     <div>
-      <h2>Receipts</h2>
+      <h2>Orders</h2>
       <p class="hint">Open invoices only — those still unpaid or not yet handed over. Pick one, then save the image and send it to the buyer.</p>
     </div>
 
@@ -91,18 +91,18 @@
       <input type="search" id="q" placeholder="Filter by invoice number, batch or status…" autocomplete="off">
     </div>
 
-    <div class="receipt-layout">
+    <div class="order-layout">
       <div class="panel inv-list" id="list">
         <p class="hint" style="padding:1rem;margin:0">Loading invoices…</p>
       </div>
       <div class="panel stage" id="stage">
-        <p class="hint" id="stage-note">Choose an invoice on the left to build its receipt.</p>
+        <p class="hint" id="stage-note">Choose an invoice on the left to build its order image.</p>
       </div>
     </div>
   </div>
 </div>
 
-<script src="/receipt-draw.js"></script>
+<script src="/order-draw.js"></script>
 <script>
 (function () {
   // Follow whatever theme the site was last set to; the toggle lives on the
@@ -183,13 +183,13 @@
           return body;
         });
       })
-      // The embedded font must be loaded before drawing, or the first receipt
+      // The embedded font must be loaded before drawing, or the first order
       // is measured and painted in a fallback face.
       .then(function (data) {
         var ready = document.fonts && document.fonts.load
           ? Promise.all([
-              document.fonts.load('400 15px ReceiptMono'),
-              document.fonts.load('700 15px ReceiptMono')
+              document.fonts.load('400 15px OrderMono'),
+              document.fonts.load('700 15px OrderMono')
             ]).catch(function () {})
           : Promise.resolve();
         return ready.then(function () { return data; });
@@ -200,9 +200,9 @@
         stageEl.innerHTML = '';
         var canvas = document.createElement('canvas');
         canvas.setAttribute('role', 'img');
-        canvas.setAttribute('aria-label', 'Receipt for ' + number);
+        canvas.setAttribute('aria-label', 'Order for ' + number);
         stageEl.appendChild(canvas);
-        ReceiptDraw.draw(canvas, data);
+        OrderDraw.draw(canvas, data);
 
         var actions = document.createElement('div');
         actions.className = 'actions';

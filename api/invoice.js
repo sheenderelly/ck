@@ -1,5 +1,5 @@
-// Reads invoices from Notion and returns them as JSON. The receipt image is
-// drawn in the browser (see receipt-draw.js), so this function has no image
+// Reads invoices from Notion and returns them as JSON. The order image is
+// drawn in the browser (see order-draw.js), so this function has no image
 // renderer to bundle — nothing here carries a wasm file or a native binary.
 
 const NOTION = "https://api.notion.com/v1";
@@ -50,7 +50,7 @@ async function notion(path, body) {
   return res.json();
 }
 
-// Notion wraps every value in its own shape; the receipt only wants the value.
+// Notion wraps every value in its own shape; the order only needs the value.
 export function val(prop) {
   if (!prop) return null;
   switch (prop.type) {
@@ -116,7 +116,7 @@ export function toClient(page) {
 }
 
 // Shapes one invoice plus its lines into what the canvas expects.
-export function toReceipt(inv, lines, buyer, createdTime) {
+export function toOrder(inv, lines, buyer, createdTime) {
   const client = typeof buyer === "string" ? { name: buyer } : buyer ?? {};
   // Prefer Notion's own formulas, but never send a blank total if one is missing.
   const subtotal = num(inv.subtotal ?? lines.reduce((sum, l) => sum + num(l.amount), 0));
@@ -209,7 +209,7 @@ async function loadInvoice(number) {
   const buyerId = inv.buyer?.[0];
   const client = buyerId ? toClient(await notion(`/pages/${buyerId}`)) : null;
 
-  return toReceipt(inv, linePages.results.map(props), client, page.created_time);
+  return toOrder(inv, linePages.results.map(props), client, page.created_time);
 }
 
 export default async function handler(req, res) {

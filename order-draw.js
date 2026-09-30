@@ -1,11 +1,11 @@
-// Draws a receipt onto a canvas, in the site's own design: the moss and olive
+// Draws an order onto a canvas, in the site's own design: the moss and olive
 // theme tokens from style.css and Roboto Mono. Colours are read from the live
-// CSS variables, so the receipt follows whichever theme the page is in and
+// CSS variables, so the order follows whichever theme the page is in and
 // changes with the site rather than drifting from it.
 (function (global) {
   "use strict";
 
-  var FONT = "ReceiptMono, 'Roboto Mono', monospace";
+  var FONT = "OrderMono, 'Roboto Mono', monospace";
 
   var W = 820;
   var PAD = 40;
@@ -17,7 +17,7 @@
   var ROW_H = 64;
   var SCALE = 2; // drawn at 2x so the saved image stays sharp when zoomed
 
-  // Falls back to the dark theme's values so a receipt still draws if the
+  // Falls back to the dark theme's values so an order still draws if the
   // stylesheet has not applied yet.
   var FALLBACK = {
     "--bg-main": "#1a1c18",
@@ -120,7 +120,7 @@
   var ROW_STRONG = 44;
   var ROW_PLAIN = 32;
   var FOOT_H = 116;
-  var CARD_PAD = 24; // the card inset around the whole receipt
+  var CARD_PAD = 24; // the card inset around the whole order
 
   function totalsAdvance(data) {
     var a = ROW_PLAIN + ROW_STRONG; // subtotal, total
@@ -177,7 +177,7 @@
     var ctx = canvas.getContext("2d");
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
 
-    // The page background, then the receipt as a card on top of it — the same
+    // The page background, then the order as a card on top of it — the same
     // relationship as .panel against --bg-main on the site.
     ctx.fillStyle = t["--bg-main"];
     ctx.fillRect(0, 0, W, height);
@@ -195,7 +195,7 @@
 
     var y = PAD + 30;
     // h5 on the site: uppercase, letterspaced, small.
-    text(ctx, "RECEIPT", PAD, y, { size: 30, weight: 700, spacing: 4, color: primary });
+    text(ctx, "ORDER", PAD, y, { size: 30, weight: 700, spacing: 4, color: primary });
 
     // Status reads as the site's code chip: elevated fill, bordered, accent text.
     if (data.status) {
@@ -300,5 +300,5 @@
     return canvas;
   }
 
-  global.ReceiptDraw = { draw: draw, heightFor: heightFor, peso: peso, wrap: wrap, WIDTH: W };
+  global.OrderDraw = { draw: draw, heightFor: heightFor, peso: peso, wrap: wrap, WIDTH: W };
 })(typeof window !== "undefined" ? window : this);
