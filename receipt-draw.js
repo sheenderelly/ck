@@ -1,16 +1,11 @@
-// Draws a receipt onto a canvas. Runs in the browser so there is no
-// server-side image renderer to bundle, and so the fonts and text shaping are
-// the ones the device already has.
+// Draws a receipt onto a canvas, in the site's own design: the moss and olive
+// theme tokens from style.css and Roboto Mono. Colours are read from the live
+// CSS variables, so the receipt follows whichever theme the page is in and
+// changes with the site rather than drifting from it.
 (function (global) {
   "use strict";
 
-  var PAPER = "#faf7f2";
-  var ACCENT = "#d3252b";
-  var INK = "#1a1a1a";
-  var MUTED = "#8a8178";
-  var RULE = "#e2dad0";
-  var PAID = "#3f8f4f";
-  var FONT = "ReceiptPoppins, Poppins, Helvetica, Arial, sans-serif";
+  var FONT = "ReceiptMono, 'Roboto Mono', monospace";
 
   var W = 820;
   var PAD = 40;
@@ -18,15 +13,43 @@
   var X_PRICE = 620;
   var X_RIGHT = W - PAD;
   var ITEM_W = 400;
+  var BUYER_W = 440;
   var ROW_H = 64;
   var SCALE = 2; // drawn at 2x so the saved image stays sharp when zoomed
+
+  // Falls back to the dark theme's values so a receipt still draws if the
+  // stylesheet has not applied yet.
+  var FALLBACK = {
+    "--bg-main": "#1a1c18",
+    "--bg-card": "#242821",
+    "--bg-elevated": "#2a2f25",
+    "--text-primary": "#f1f3ec",
+    "--text-secondary": "#a9ba9d",
+    "--text-muted": "#6c7a5e",
+    "--border": "#4a5441",
+    "--accent": "#d4e157",
+    "--success": "#81c784",
+    "--error": "#c0413c",
+  };
+
+  function tokens() {
+    var css = global.getComputedStyle
+      ? global.getComputedStyle(document.documentElement)
+      : null;
+    var t = {};
+    Object.keys(FALLBACK).forEach(function (name) {
+      var v = css ? String(css.getPropertyValue(name) || "").trim() : "";
+      t[name] = v || FALLBACK[name];
+    });
+    return t;
+  }
 
   function num(v) {
     return typeof v === "number" && isFinite(v) ? v : 0;
   }
 
-  // The peso sign is missing from the embedded subset, so amounts spell out the
-  // currency rather than risking a blank box on some devices.
+  // The mono subset has no peso sign, so amounts spell out the currency rather
+  // than risking a blank box.
   function peso(v) {
     var n = num(v);
     var body = Math.round(Math.abs(n)).toLocaleString("en-US");
@@ -70,8 +93,8 @@
 
   function text(ctx, str, x, y, opts) {
     var o = opts || {};
-    ctx.font = font(o.size || 16, o.weight);
-    ctx.fillStyle = o.color || INK;
+    ctx.font = font(o.size || 15, o.weight);
+    ctx.fillStyle = o.color || "#000";
     ctx.textAlign = o.align || "left";
     ctx.textBaseline = "alphabetic";
     if (o.spacing && ctx.letterSpacing !== undefined) ctx.letterSpacing = o.spacing + "px";
@@ -84,34 +107,21 @@
     ctx.fillRect(PAD, y, W - PAD * 2, width || 1);
   }
 
-  function pill(ctx, label, rightX, y) {
-    if (!label) return;
-    ctx.font = font(15, 400);
-    var w = ctx.measureText(label).width + 32;
-    var h = 32;
-    var x = rightX - w;
-    ctx.fillStyle = arguments[4] || MUTED;
-    if (ctx.roundRect) {
-      ctx.beginPath();
-      ctx.roundRect(x, y, w, h, h / 2);
-      ctx.fill();
-    } else {
-      ctx.fillRect(x, y, w, h);
-    }
-    text(ctx, label, x + w / 2, y + 21, { size: 15, color: "#fff", align: "center" });
+  // A soft-cornered box, matching the site's --radius-md on .panel.
+  function box(ctx, x, y, w, h, radius, fill, stroke) {
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, radius);
+    else ctx.rect(x, y, w, h);
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
   }
 
-  // The billed-to block is capped well short of the date column, so a long
-  // address wraps instead of running into the date.
-  var BUYER_W = 480;
   var TOTALS_GAP = 34;
   var ROW_STRONG = 44;
   var ROW_PLAIN = 32;
-  // Descender, the gap to the footer rule, the footer line and the bottom pad.
   var FOOT_H = 116;
+  var CARD_PAD = 24; // the card inset around the whole receipt
 
-  // How far the totals block advances. The last row is always a strong one
-  // (Total, or Balance when something has been paid).
   function totalsAdvance(data) {
     var a = ROW_PLAIN + ROW_STRONG; // subtotal, total
     if (num(data.shipping)) a += ROW_PLAIN;
@@ -119,23 +129,20 @@
     return a;
   }
 
-  // The billed-to block as a list of {text, size, weight, color, gap}, where
-  // gap is the distance down to the next baseline. Needs a context to measure
-  // the address against BUYER_W.
-  function buyerBlock(ctx, data) {
-    var out = [{ text: data.buyer || "—", size: 23, weight: 600, gap: 26 }];
+  function buyerBlock(ctx, data, t) {
+    var out = [{ text: data.buyer || "—", size: 20, weight: 700, color: t["--text-primary"], gap: 26 }];
 
     if (data.receiver && data.receiver !== data.buyer) {
-      out.push({ text: "Attn: " + data.receiver, size: 15, color: MUTED, gap: 24 });
+      out.push({ text: "Attn: " + data.receiver, size: 13, color: t["--text-secondary"], gap: 24 });
     }
     if (data.address) {
-      ctx.font = font(14, 400);
+      ctx.font = font(13, 400);
       wrap(ctx, data.address, BUYER_W, 3).forEach(function (line, i) {
-        out.push({ text: line, size: 14, color: MUTED, gap: i === 0 ? 22 : 19 });
+        out.push({ text: line, size: 13, color: t["--text-muted"], gap: i === 0 ? 22 : 19 });
       });
     }
     if (data.phone) {
-      out.push({ text: data.phone, size: 14, color: MUTED, gap: 22 });
+      out.push({ text: data.phone, size: 13, color: t["--text-muted"], gap: 22 });
     }
     return out;
   }
@@ -144,24 +151,23 @@
     return block.reduce(function (sum, item) { return sum + item.gap; }, 0);
   }
 
-  // Mirrors exactly how draw() walks down the page, minus the trailing advance
-  // after the final total — otherwise the footer floats away from the content.
-  function heightFor(data, ctx) {
-    var lines = (data.lines || []).length;
-    var head = 150 + blockHeight(buyerBlock(ctx || scratch(), data)) + 18 + 28 + 12;
-    return head + lines * ROW_H + TOTALS_GAP + totalsAdvance(data) - ROW_STRONG + FOOT_H;
-  }
-
-  // A throwaway context purely for measuring text before the real canvas is
-  // sized, since resizing a canvas resets its state.
   function scratch() {
     return document.createElement("canvas").getContext("2d");
   }
 
+  function heightFor(data, ctx) {
+    var lines = (data.lines || []).length;
+    var t = tokens();
+    var head = 150 + blockHeight(buyerBlock(ctx || scratch(), data, t)) + 18 + 28 + 12;
+    return head + lines * ROW_H + TOTALS_GAP + totalsAdvance(data) - ROW_STRONG + FOOT_H;
+  }
+
   function draw(canvas, data) {
+    var t = tokens();
     var lines = data.lines || [];
-    var block = buyerBlock(scratch(), data);
-    var height = heightFor(data, scratch());
+    var block = buyerBlock(scratch(), data, t);
+    var inner = heightFor(data, scratch());
+    var height = inner + CARD_PAD * 2;
 
     canvas.width = W * SCALE;
     canvas.height = height * SCALE;
@@ -171,80 +177,106 @@
     var ctx = canvas.getContext("2d");
     ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
 
-    ctx.fillStyle = PAPER;
+    // The page background, then the receipt as a card on top of it — the same
+    // relationship as .panel against --bg-main on the site.
+    ctx.fillStyle = t["--bg-main"];
     ctx.fillRect(0, 0, W, height);
+    box(ctx, CARD_PAD / 2, CARD_PAD / 2, W - CARD_PAD, height - CARD_PAD, 6,
+        t["--bg-card"], t["--border"]);
 
-    var y = PAD + 36;
-    text(ctx, "RECEIPT", PAD, y, { size: 36, weight: 600, spacing: 3 });
-    pill(ctx, data.status, X_RIGHT, PAD + 6, num(data.balance) > 0 ? MUTED : PAID);
-    y += 30;
-    text(ctx, data.number, PAD, y, { size: 21, weight: 600, color: ACCENT });
-    if (data.batch) text(ctx, data.batch, X_RIGHT, y, { size: 14, color: MUTED, align: "right" });
+    ctx.save();
+    ctx.translate(0, CARD_PAD);
+
+    var accent = t["--accent"];
+    var primary = t["--text-primary"];
+    var secondary = t["--text-secondary"];
+    var muted = t["--text-muted"];
+    var border = t["--border"];
+
+    var y = PAD + 30;
+    // h5 on the site: uppercase, letterspaced, small.
+    text(ctx, "RECEIPT", PAD, y, { size: 30, weight: 700, spacing: 4, color: primary });
+
+    // Status reads as the site's code chip: elevated fill, bordered, accent text.
+    if (data.status) {
+      ctx.font = font(13, 400);
+      var sw = ctx.measureText(data.status).width + 24;
+      var unpaid = num(data.balance) > 0;
+      box(ctx, X_RIGHT - sw, PAD + 6, sw, 28, 4, t["--bg-elevated"],
+          unpaid ? t["--error"] : t["--success"]);
+      text(ctx, data.status, X_RIGHT - sw / 2, PAD + 25, {
+        size: 13,
+        color: unpaid ? t["--error"] : t["--success"],
+        align: "center",
+      });
+    }
+
+    y += 28;
+    text(ctx, data.number, PAD, y, { size: 18, weight: 700, color: accent });
+    if (data.batch) text(ctx, data.batch, X_RIGHT, y, { size: 13, color: muted, align: "right" });
 
     // Buyer and date
     y += 44;
-    text(ctx, "BILLED TO", PAD, y, { size: 12, color: MUTED, spacing: 1.5 });
-    text(ctx, "DATE", X_RIGHT, y, { size: 12, color: MUTED, align: "right", spacing: 1.5 });
+    text(ctx, "BILLED TO", PAD, y, { size: 11, color: secondary, spacing: 1.5, weight: 700 });
+    text(ctx, "DATE", X_RIGHT, y, { size: 11, color: secondary, align: "right", spacing: 1.5, weight: 700 });
 
     block.forEach(function (item) {
       y += item.gap;
       text(ctx, item.text, PAD, y, { size: item.size, weight: item.weight, color: item.color });
-      // The date sits beside the first line of the block, never over it.
       if (item === block[0] && data.date) {
-        text(ctx, data.date, X_RIGHT, y, { size: 17, align: "right" });
+        text(ctx, data.date, X_RIGHT, y, { size: 15, color: primary, align: "right" });
       }
     });
 
     y += 18;
-    rule(ctx, y, INK, 2);
+    rule(ctx, y, accent, 2);
 
-    // Column headings
+    // Column headings, in the site's h6 idiom
     y += 28;
-    text(ctx, "ITEM", PAD, y, { size: 12, color: MUTED, weight: 600, spacing: 1.2 });
-    text(ctx, "QTY", X_QTY, y, { size: 12, color: MUTED, weight: 600, align: "center", spacing: 1.2 });
-    text(ctx, "PRICE", X_PRICE, y, { size: 12, color: MUTED, weight: 600, align: "right", spacing: 1.2 });
-    text(ctx, "AMOUNT", X_RIGHT, y, { size: 12, color: MUTED, weight: 600, align: "right", spacing: 1.2 });
+    var head = { size: 11, color: secondary, weight: 700, spacing: 1.2 };
+    text(ctx, "ITEM", PAD, y, head);
+    text(ctx, "QTY", X_QTY, y, Object.assign({ align: "center" }, head));
+    text(ctx, "PRICE", X_PRICE, y, Object.assign({ align: "right" }, head));
+    text(ctx, "AMOUNT", X_RIGHT, y, Object.assign({ align: "right" }, head));
     y += 12;
-    rule(ctx, y, RULE);
+    rule(ctx, y, border);
 
-    // Line items
     lines.forEach(function (l, i) {
       var top = y;
       if (i % 2) {
-        ctx.fillStyle = "rgba(0,0,0,0.02)";
+        ctx.fillStyle = t["--bg-elevated"];
         ctx.fillRect(PAD, top, W - PAD * 2, ROW_H);
       }
-      ctx.font = font(17, 400);
+      ctx.font = font(15, 400);
       var wrapped = wrap(ctx, l["product name"], ITEM_W, 2);
       var baseline = top + 26;
       wrapped.forEach(function (ln, n) {
-        text(ctx, ln, PAD, baseline + n * 22, { size: 17 });
+        text(ctx, ln, PAD, baseline + n * 21, { size: 15, color: primary });
       });
-      text(ctx, String(num(l.qty) || 1), X_QTY, baseline, { size: 17, color: MUTED, align: "center" });
-      text(ctx, peso(l["list price"]), X_PRICE, baseline, { size: 17, color: MUTED, align: "right" });
-      text(ctx, peso(l.amount), X_RIGHT, baseline, { size: 17, weight: 600, align: "right" });
+      text(ctx, String(num(l.qty) || 1), X_QTY, baseline, { size: 15, color: muted, align: "center" });
+      text(ctx, peso(l["list price"]), X_PRICE, baseline, { size: 15, color: muted, align: "right" });
+      text(ctx, peso(l.amount), X_RIGHT, baseline, { size: 15, weight: 700, color: primary, align: "right" });
 
       y = top + ROW_H;
-      rule(ctx, y, RULE);
+      rule(ctx, y, border);
     });
 
     // Totals
     y += 34;
-    function totalRow(label, value, strong, accent) {
-      var size = strong ? 20 : 16;
-      text(ctx, label, X_RIGHT - 230, y, {
-        size: size,
-        color: strong ? INK : MUTED,
-        weight: strong ? 600 : 400,
+    function totalRow(label, value, strong, isBalance) {
+      text(ctx, label, X_RIGHT - 250, y, {
+        size: strong ? 16 : 14,
+        color: strong ? primary : secondary,
+        weight: strong ? 700 : 400,
         align: "right",
       });
       text(ctx, value, X_RIGHT, y, {
-        size: strong ? 28 : 16,
-        weight: strong ? 600 : 400,
-        color: accent ? ACCENT : INK,
+        size: strong ? 24 : 14,
+        weight: strong ? 700 : 400,
+        color: isBalance ? t["--error"] : strong ? accent : primary,
         align: "right",
       });
-      y += strong ? 44 : 32;
+      y += strong ? ROW_STRONG : ROW_PLAIN;
     }
 
     totalRow("Subtotal", peso(data.subtotal));
@@ -255,16 +287,16 @@
       totalRow("Balance", peso(data.balance), true, num(data.balance) > 0);
     }
 
-    // Footer, pinned to the bottom
-    var footY = height - PAD - 10;
-    rule(ctx, footY - 26, RULE);
-    text(ctx, "Thank you!", PAD, footY, { size: 15, color: MUTED });
+    var footY = inner - PAD - 10;
+    rule(ctx, footY - 26, border);
+    text(ctx, "Thank you!", PAD, footY, { size: 13, color: muted });
     text(ctx, lines.length + (lines.length === 1 ? " item" : " items"), X_RIGHT, footY, {
-      size: 15,
-      color: MUTED,
+      size: 13,
+      color: muted,
       align: "right",
     });
 
+    ctx.restore();
     return canvas;
   }
 
