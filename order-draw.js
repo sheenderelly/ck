@@ -122,6 +122,45 @@
   var FOOT_H = 116;
   var CARD_PAD = 24; // the card inset around the whole order
 
+  // Where the QR sends a buyer. The copy-link tracking parameter is dropped:
+  // it does nothing for the buyer and only makes the code denser.
+  var PAY_URL =
+    "https://app.notion.com/p/cks-pad/fund-transfer-2e00e47d8033803880a3d476cb346f98";
+  var QR_PLATE = 120;      // the light plate the code sits on
+  var QR_SECTION_H = 192;  // the whole payment band, including its margins
+
+  // Renders the code at one pixel per module, then scales it up with smoothing
+  // off. Drawing the modules directly at a fractional size would blur their
+  // edges, which is what makes a code hard to scan.
+  function qrTile(url) {
+    if (typeof qrcode !== "function") return null;
+    try {
+      var qr = qrcode(0, "M");
+      qr.addData(url);
+      qr.make();
+      var n = qr.getModuleCount();
+      var quiet = 4; // the spec's quiet zone, in modules
+      var total = n + quiet * 2;
+
+      var tile = document.createElement("canvas");
+      tile.width = tile.height = total;
+      var g = tile.getContext("2d");
+      // Always dark-on-light, whatever the site theme is: an inverted code is
+      // unreliable to scan, and this one is meant for a stranger's phone.
+      g.fillStyle = "#ffffff";
+      g.fillRect(0, 0, total, total);
+      g.fillStyle = "#000000";
+      for (var r = 0; r < n; r++) {
+        for (var c = 0; c < n; c++) {
+          if (qr.isDark(r, c)) g.fillRect(c + quiet, r + quiet, 1, 1);
+        }
+      }
+      return tile;
+    } catch (e) {
+      return null; // a missing code must not cost us the whole order image
+    }
+  }
+
   function totalsAdvance(data) {
     var a = ROW_PLAIN + ROW_STRONG; // subtotal, total
     if (num(data.shipping)) a += ROW_PLAIN;
@@ -159,7 +198,10 @@
     var lines = (data.lines || []).length;
     var t = tokens();
     var head = 150 + blockHeight(buyerBlock(ctx || scratch(), data, t)) + 18 + 28 + 12;
-    return head + lines * ROW_H + TOTALS_GAP + totalsAdvance(data) - ROW_STRONG + FOOT_H;
+    return (
+      head + lines * ROW_H + TOTALS_GAP + totalsAdvance(data) - ROW_STRONG +
+      QR_SECTION_H + FOOT_H
+    );
   }
 
   function draw(canvas, data) {
@@ -286,6 +328,35 @@
       totalRow("Paid", "- " + peso(data.paid));
       totalRow("Balance", peso(data.balance), true, num(data.balance) > 0);
     }
+
+    // Payment methods: a scannable code and the line that explains it.
+    var bandY = inner - FOOT_H - QR_SECTION_H + 30;
+    var bandH = QR_SECTION_H - 48;
+    box(ctx, PAD, bandY, W - PAD * 2, bandH, 6, t["--bg-elevated"], border);
+
+    var plateX = PAD + 18;
+    var plateY = bandY + (bandH - QR_PLATE) / 2;
+    var tile = qrTile(PAY_URL);
+    if (tile) {
+      box(ctx, plateX, plateY, QR_PLATE, QR_PLATE, 4, "#ffffff", null);
+      var pad = 6;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(tile, plateX + pad, plateY + pad, QR_PLATE - pad * 2, QR_PLATE - pad * 2);
+      ctx.imageSmoothingEnabled = true;
+    }
+
+    var textX = plateX + (tile ? QR_PLATE + 26 : 0);
+    var midY = bandY + bandH / 2;
+    text(ctx, "SCAN HERE", textX, midY - 8, {
+      size: 15,
+      weight: 700,
+      color: accent,
+      spacing: 2,
+    });
+    text(ctx, "for the list of payment methods", textX, midY + 16, {
+      size: 14,
+      color: secondary,
+    });
 
     var footY = inner - PAD - 10;
     rule(ctx, footY - 26, border);
