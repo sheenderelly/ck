@@ -180,6 +180,28 @@ export function pendingFilter(complete) {
   return sides.length === 1 ? sides[0] : { or: sides };
 }
 
+// Resolves the buyer relations to client names in one pass. Each distinct
+// client is fetched once, however many invoices point at them, and a lookup
+// that fails costs that row its name rather than the whole list.
+const MAX_CLIENT_LOOKUPS = 60;
+
+export async function buyerNames(rows, fetchPage) {
+  const ids = [...new Set(rows.map((inv) => inv.buyer?.[0]).filter(Boolean))].slice(
+    0,
+    MAX_CLIENT_LOOKUPS
+  );
+  const entries = await Promise.all(
+    ids.map(async (id) => {
+      try {
+        return [id, toClient(await fetchPage(id)).name];
+      } catch {
+        return [id, ""];
+      }
+    })
+  );
+  return new Map(entries);
+}
+
 // Walks every page of a query, so a long back catalogue cannot push pending
 // invoices off the end of the first 100.
 async function queryAll(dbId, body, maxPages = 10) {
@@ -237,17 +259,18 @@ export default async function handler(req, res) {
         filter: pendingFilter(complete),
         sorts: [{ property: "invoice", direction: "descending" }],
       });
-      const invoices = results
-        .map((p) => {
-          const inv = props(p);
-          return {
-            number: inv.invoice,
-            sellerStatus: deEmoji(inv["seller status"]),
-            batch: deEmoji(inv.batch),
-            status: deEmoji(inv["buyer status"]),
-            total: num(inv["total amount"] ?? inv.subtotal),
-          };
-        })
+      const rows = results.map(props);
+      const names = await buyerNames(rows, (id) => notion(`/pages/${id}`));
+
+      const invoices = rows
+        .map((inv) => ({
+          number: inv.invoice,
+          buyer: names.get(inv.buyer?.[0]) ?? "",
+          sellerStatus: deEmoji(inv["seller status"]),
+          batch: deEmoji(inv.batch),
+          status: deEmoji(inv["buyer status"]),
+          total: num(inv["total amount"] ?? inv.subtotal),
+        }))
         .filter((i) => i.number);
       return res.status(200).json({ invoices });
     }

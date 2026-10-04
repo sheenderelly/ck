@@ -24,7 +24,7 @@
   .inv {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.75rem;
     width: 100%;
     padding: 0.7rem 1rem;
@@ -45,8 +45,10 @@
     box-shadow: inset 3px 0 0 var(--accent);
   }
   .inv .no { font-weight: 600; color: var(--accent); }
+  .inv .who { color: var(--text-primary); margin-top: 0.1rem; }
   .inv .meta { color: var(--text-muted); font-size: 11px; margin-top: 0.15rem; }
-  .inv .amt { white-space: nowrap; color: var(--text-secondary); }
+  .inv .amt { white-space: nowrap; color: var(--text-secondary); align-self: flex-start; }
+  .inv > div:first-child { min-width: 0; }
 
   .stage { min-height: 260px; }
   .stage canvas {
@@ -98,7 +100,7 @@
     </div>
 
     <div class="filter-row">
-      <input type="search" id="q" placeholder="Filter by invoice number, batch or status…" autocomplete="off">
+      <input type="search" id="q" placeholder="Filter by invoice, customer, batch or status…" autocomplete="off">
     </div>
 
     <div class="order-layout">
@@ -146,7 +148,8 @@
     var term = qEl.value.trim().toLowerCase();
     var shown = invoices.filter(function (i) {
       if (!term) return true;
-      return [i.number, i.batch, i.status, i.sellerStatus].join(' ').toLowerCase().indexOf(term) > -1;
+      return [i.number, i.buyer, i.batch, i.status, i.sellerStatus]
+        .join(' ').toLowerCase().indexOf(term) > -1;
     });
 
     if (!shown.length) {
@@ -165,10 +168,18 @@
       var no = document.createElement('div');
       no.className = 'no';
       no.textContent = i.number;
+      left.appendChild(no);
+
+      if (i.buyer) {
+        var who = document.createElement('div');
+        who.className = 'who';
+        who.textContent = i.buyer;
+        left.appendChild(who);
+      }
+
       var meta = document.createElement('div');
       meta.className = 'meta';
       meta.textContent = [i.status, i.sellerStatus, i.batch].filter(Boolean).join(' · ');
-      left.appendChild(no);
       left.appendChild(meta);
 
       var amt = document.createElement('div');
