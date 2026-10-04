@@ -371,5 +371,37 @@
     return canvas;
   }
 
-  global.OrderDraw = { draw: draw, heightFor: heightFor, peso: peso, wrap: wrap, WIDTH: W };
+  // The same order as plain text, for pasting into a chat. Lines in brackets
+  // in the spec — paid and balance — appear only when there is a value, and
+  // shipping follows the same rule so the items and the total still add up.
+  function asText(data) {
+    var out = [];
+    if (data.buyer) out.push(data.buyer);
+
+    var lines = data.lines || [];
+    if (lines.length) {
+      if (out.length) out.push("");
+      lines.forEach(function (l) {
+        var name = String(l["product name"] == null ? "" : l["product name"]).trim();
+        out.push(name + "  x" + (num(l.qty) || 1) + "  " + peso(l.amount));
+      });
+    }
+
+    out.push("");
+    if (num(data.shipping)) out.push("Shipping  " + peso(data.shipping));
+    out.push("Total  " + peso(data.total));
+    if (num(data.paid) > 0) out.push("Paid  " + peso(data.paid));
+    if (num(data.balance) > 0) out.push("Balance  " + peso(data.balance));
+
+    return out.join("\n");
+  }
+
+  global.OrderDraw = {
+    draw: draw,
+    heightFor: heightFor,
+    peso: peso,
+    wrap: wrap,
+    asText: asText,
+    WIDTH: W,
+  };
 })(typeof window !== "undefined" ? window : this);

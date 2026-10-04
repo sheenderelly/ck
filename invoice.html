@@ -58,6 +58,16 @@
   .actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; }
   .hint { color: var(--text-muted); font-size: 12px; line-height: 1.6; }
   .fail { color: var(--error); font-size: 13px; line-height: 1.6; }
+  .text-block { margin-top: 1.25rem; }
+  .text-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .text-block pre { margin: 0; white-space: pre-wrap; word-break: break-word; }
+
   .filter-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
   .filter-row input[type="search"] {
     flex: 1 1 240px;
@@ -247,6 +257,47 @@
         actions.appendChild(copy);
 
         stageEl.appendChild(actions);
+
+        // The same order as text, for pasting into a chat thread.
+        var block = document.createElement('div');
+        block.className = 'text-block';
+
+        var head = document.createElement('div');
+        head.className = 'text-head';
+        var label = document.createElement('span');
+        label.className = 'hint';
+        label.textContent = 'Plain text';
+        var copyText = document.createElement('button');
+        copyText.className = 'btn btn-secondary';
+        copyText.type = 'button';
+        copyText.textContent = 'Copy text';
+        head.appendChild(label);
+        head.appendChild(copyText);
+
+        var pre = document.createElement('pre');
+        pre.textContent = OrderDraw.asText(data);
+
+        copyText.addEventListener('click', function () {
+          var done = function () { copyText.textContent = 'Copied'; };
+          var failed = function () { copyText.textContent = 'Copy failed'; };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(pre.textContent).then(done).catch(failed);
+            return;
+          }
+          // Older mobile browsers: select the block so it can be copied by hand.
+          try {
+            var range = document.createRange();
+            range.selectNodeContents(pre);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            done();
+          } catch (e) { failed(); }
+        });
+
+        block.appendChild(head);
+        block.appendChild(pre);
+        stageEl.appendChild(block);
       })
       .catch(function (err) {
         if (current !== number) return;
