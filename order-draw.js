@@ -122,10 +122,15 @@
   var FOOT_H = 116;
   var CARD_PAD = 24; // the card inset around the whole order
 
-  // Where the QR sends a buyer. The copy-link tracking parameter is dropped:
-  // it does nothing for the buyer and only makes the code denser.
+  // Where both the QR and the text send a buyer: the published notion.site
+  // address, which a stranger can open without a Notion account. One constant,
+  // so the code and the pasted link can never drift apart.
   var PAY_URL =
-    "https://app.notion.com/p/cks-pad/fund-transfer-2e00e47d8033803880a3d476cb346f98";
+    "https://cks-pad.notion.site/fund-transfer-2e00e47d8033803880a3d476cb346f98";
+
+  // Pasted into a chat rather than drawn, so the emoji and the bold letters are
+  // the receiving app's to render, not the canvas font's.
+  var PAY_PROMPT = "\u{1F447}\u{1F3FB} \u{1D429}\u{1D41A}\u{1D432} \u{1D421}\u{1D41E}\u{1D42B}\u{1D41E}:";
   var QR_PLATE = 120;      // the light plate the code sits on
   var QR_SECTION_H = 192;  // the whole payment band, including its margins
 
@@ -408,6 +413,13 @@
     out.push("Total  " + peso(data.total));
     if (num(data.paid) > 0) out.push("Paid  " + peso(data.paid));
     if (num(data.balance) > 0) out.push("Balance  " + peso(data.balance));
+
+    // Same condition as the QR band: nothing left to pay, nothing to point at.
+    if (owes(data)) {
+      out.push("");
+      out.push(PAY_PROMPT);
+      out.push(PAY_URL);
+    }
 
     return out.join("\n");
   }
