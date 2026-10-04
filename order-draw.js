@@ -129,6 +129,13 @@
   var QR_PLATE = 120;      // the light plate the code sits on
   var QR_SECTION_H = 192;  // the whole payment band, including its margins
 
+  // There is nothing to pay once the balance is settled, so the payment band
+  // is left off entirely. Driven by the balance rather than the status, the
+  // same signal the status chip is coloured by.
+  function owes(data) {
+    return num(data.balance) > 0;
+  }
+
   // Renders the code at one pixel per module, then scales it up with smoothing
   // off. Drawing the modules directly at a fractional size would blur their
   // edges, which is what makes a code hard to scan.
@@ -200,7 +207,7 @@
     var head = 150 + blockHeight(buyerBlock(ctx || scratch(), data, t)) + 18 + 28 + 12;
     return (
       head + lines * ROW_H + TOTALS_GAP + totalsAdvance(data) - ROW_STRONG +
-      QR_SECTION_H + FOOT_H
+      (owes(data) ? QR_SECTION_H : 0) + FOOT_H
     );
   }
 
@@ -329,34 +336,37 @@
       totalRow("Balance", peso(data.balance), true, num(data.balance) > 0);
     }
 
-    // Payment methods: a scannable code and the line that explains it.
-    var bandY = inner - FOOT_H - QR_SECTION_H + 30;
-    var bandH = QR_SECTION_H - 48;
-    box(ctx, PAD, bandY, W - PAD * 2, bandH, 6, t["--bg-elevated"], border);
+    // Payment methods: a scannable code and the line that explains it. Only
+    // while something is still owed.
+    if (owes(data)) {
+      var bandY = inner - FOOT_H - QR_SECTION_H + 30;
+      var bandH = QR_SECTION_H - 48;
+      box(ctx, PAD, bandY, W - PAD * 2, bandH, 6, t["--bg-elevated"], border);
 
-    var plateX = PAD + 18;
-    var plateY = bandY + (bandH - QR_PLATE) / 2;
-    var tile = qrTile(PAY_URL);
-    if (tile) {
-      box(ctx, plateX, plateY, QR_PLATE, QR_PLATE, 4, "#ffffff", null);
-      var pad = 6;
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(tile, plateX + pad, plateY + pad, QR_PLATE - pad * 2, QR_PLATE - pad * 2);
-      ctx.imageSmoothingEnabled = true;
+      var plateX = PAD + 18;
+      var plateY = bandY + (bandH - QR_PLATE) / 2;
+      var tile = qrTile(PAY_URL);
+      if (tile) {
+        box(ctx, plateX, plateY, QR_PLATE, QR_PLATE, 4, "#ffffff", null);
+        var pad = 6;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(tile, plateX + pad, plateY + pad, QR_PLATE - pad * 2, QR_PLATE - pad * 2);
+        ctx.imageSmoothingEnabled = true;
+      }
+
+      var textX = plateX + (tile ? QR_PLATE + 26 : 0);
+      var midY = bandY + bandH / 2;
+      text(ctx, "SCAN HERE", textX, midY - 8, {
+        size: 15,
+        weight: 700,
+        color: accent,
+        spacing: 2,
+      });
+      text(ctx, "for the list of payment methods", textX, midY + 16, {
+        size: 14,
+        color: secondary,
+      });
     }
-
-    var textX = plateX + (tile ? QR_PLATE + 26 : 0);
-    var midY = bandY + bandH / 2;
-    text(ctx, "SCAN HERE", textX, midY - 8, {
-      size: 15,
-      weight: 700,
-      color: accent,
-      spacing: 2,
-    });
-    text(ctx, "for the list of payment methods", textX, midY + 16, {
-      size: 14,
-      color: secondary,
-    });
 
     var footY = inner - PAD - 10;
     rule(ctx, footY - 26, border);
