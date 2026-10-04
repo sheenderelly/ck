@@ -162,15 +162,21 @@ export function completeOptionsFrom(database) {
   return out;
 }
 
-// Keeps only invoices where BOTH the buyer and the seller side are still
-// outside their Complete group. An invoice with no status set is not complete,
-// and does_not_equal keeps it.
+// Drops an invoice only once BOTH sides are done — paid AND handed over. One
+// side still open keeps it listed, because the order is not finished.
+//
+// Notion has no "not in group" filter, so each side becomes an AND of
+// does_not_equal over its completed options ("this side is still open"), and
+// the two sides are OR'd: open on either side is enough to list it. An invoice
+// with no status set is not complete, and does_not_equal keeps it.
 export function pendingFilter(complete) {
-  const clauses = [];
-  for (const [property, names] of Object.entries(complete)) {
-    for (const name of names) clauses.push({ property, status: { does_not_equal: name } });
-  }
-  return clauses.length ? { and: clauses } : undefined;
+  const sides = Object.entries(complete)
+    .map(([property, names]) => names.map((name) => ({ property, status: { does_not_equal: name } })))
+    .filter((clauses) => clauses.length)
+    .map((clauses) => (clauses.length === 1 ? clauses[0] : { and: clauses }));
+
+  if (!sides.length) return undefined;
+  return sides.length === 1 ? sides[0] : { or: sides };
 }
 
 // Walks every page of a query, so a long back catalogue cannot push pending
