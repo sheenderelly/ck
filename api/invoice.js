@@ -128,6 +128,7 @@ export function toOrder(inv, lines, buyer, createdTime) {
     number: inv.invoice ?? "",
     batch: deEmoji(inv.batch),
     status: deEmoji(inv["buyer status"]),
+    sellerStatus: deEmoji(inv["seller status"]),
     buyer: deEmoji(client.name),
     receiver: deEmoji(client.receiver),
     address: deEmoji(client.address),

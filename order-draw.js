@@ -376,7 +376,13 @@
   // shipping follows the same rule so the items and the total still add up.
   function asText(data) {
     var out = [];
-    if (data.buyer) out.push(data.buyer);
+
+    // Header: the invoice and who it is for, then where it stands.
+    var head = [data.number, data.buyer].filter(Boolean).join("｜");
+    if (head) out.push(head);
+
+    var state = [data.sellerStatus, data.status].filter(Boolean).join(", ");
+    if (state) out.push(state);
 
     var lines = data.lines || [];
     if (lines.length) {
