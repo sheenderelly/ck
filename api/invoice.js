@@ -80,7 +80,7 @@ export function val(prop) {
       if (r.type === "number") return r.number;
       if (r.type === "array") {
         const flat = r.array.map(val).filter((v) => v !== null && v !== "");
-        // "list price" rolls up a single product, so unwrap the common case.
+        // "price PHP" rolls up a single price book row, so unwrap the common case.
         return flat.length === 1 ? flat[0] : flat;
       }
       return null;
@@ -115,6 +115,17 @@ export function toClient(page) {
   };
 }
 
+// The unit price a line is billed at. Prices now come from the price book via
+// the line's "price entry", rolled up as "price PHP". "list price" is what the
+// column used to be called, kept so a line read from an older schema still
+// prices. Failing both, the unit price is worked back from the amount.
+export function unitPrice(line) {
+  const direct = num(line["price PHP"]) || num(line["list price"]);
+  if (direct) return direct;
+  const qty = num(line.qty);
+  return qty > 0 ? num(line.amount) / qty : 0;
+}
+
 // Shapes one invoice plus its lines into what the canvas expects.
 export function toOrder(inv, lines, buyer, createdTime) {
   const client = typeof buyer === "string" ? { name: buyer } : buyer ?? {};
@@ -137,7 +148,7 @@ export function toOrder(inv, lines, buyer, createdTime) {
     lines: lines.map((l) => ({
       "product name": deEmoji(l["product name"]),
       qty: num(l.qty),
-      "list price": num(l["list price"]),
+      "list price": unitPrice(l),
       amount: num(l.amount),
     })),
     subtotal,
