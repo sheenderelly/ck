@@ -56,6 +56,19 @@
     return (n < 0 ? "-" : "") + "PHP " + body;
   }
 
+  // Philippine mobile numbers, shown as +63 ### ### ####. Accepts 9451058205,
+  // 09451058205, 63945..., +63 945... in any spacing. Anything that is not a
+  // ten-digit mobile number after that (a landline, a foreign number, a typo)
+  // is shown as it was entered rather than guessed at.
+  function phoneFmt(raw) {
+    var original = String(raw == null ? "" : raw).trim();
+    var d = original.replace(/\D/g, "");
+    if (d.length === 12 && d.indexOf("63") === 0) d = d.slice(2);
+    else if (d.length === 11 && d.charAt(0) === "0") d = d.slice(1);
+    if (d.length !== 10 || d.charAt(0) !== "9") return original;
+    return "+63 " + d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
+  }
+
   function font(size, weight) {
     return (weight || 400) + " " + size + "px " + FONT;
   }
@@ -193,7 +206,7 @@
       });
     }
     if (data.phone) {
-      out.push({ text: data.phone, size: 13, color: t["--text-muted"], gap: 22 });
+      out.push({ text: phoneFmt(data.phone), size: 13, color: t["--text-muted"], gap: 22 });
     }
     return out;
   }
@@ -480,7 +493,7 @@
     addWrapped(data.buyer || "-", 30, 700, 2, 0);
     if (data.receiver && data.receiver !== data.buyer) addWrapped("Attn: " + data.receiver, 24, 400, 2, 6);
     if (data.address) addWrapped(data.address, 24, 400, 6, 6);
-    if (data.phone) add(String(data.phone), 26, 700, "left", 6, 0);
+    if (data.phone) add(phoneFmt(data.phone), 26, 700, "left", 6, 0);
 
     rule(4, 14, 8);
 
@@ -603,7 +616,7 @@
       wrapCols("Attn: " + data.receiver, cols).forEach(function (l) { out.push(l); });
     }
     if (data.address) wrapCols(data.address, cols).forEach(function (l) { out.push(l); });
-    if (data.phone) out.push(String(data.phone));
+    if (data.phone) out.push(phoneFmt(data.phone));
     out.push(bar);
 
     var lines = data.lines || [];
@@ -627,6 +640,7 @@
     peso: peso,
     wrap: wrap,
     asText: asText,
+    phoneFmt: phoneFmt,
     drawLabel: drawLabel,
     asReceipt: asReceipt,
     WIDTH: W,
