@@ -319,14 +319,14 @@
         labHead.className = 'text-head';
         var labLabel = document.createElement('span');
         labLabel.className = 'hint';
-        labLabel.textContent = 'Label (3-inch thermal)';
+        labLabel.textContent = 'Pack list (3-inch thermal)';
         labHead.appendChild(labLabel);
         lab.appendChild(labHead);
 
         var labCanvas = document.createElement('canvas');
         labCanvas.className = 'label-canvas';
         labCanvas.setAttribute('role', 'img');
-        labCanvas.setAttribute('aria-label', 'Label for ' + number);
+        labCanvas.setAttribute('aria-label', 'Pack list for ' + number);
         lab.appendChild(labCanvas);
         OrderDraw.drawLabel(labCanvas, data);
 
@@ -335,7 +335,7 @@
 
         var labSave = document.createElement('a');
         labSave.className = 'btn btn-primary';
-        labSave.textContent = 'Save label';
+        labSave.textContent = 'Save pack list';
         labSave.href = '#';
         labSave.addEventListener('click', function (e) {
           e.preventDefault();
@@ -344,7 +344,7 @@
             blobUrl = URL.createObjectURL(blob);
             var a = document.createElement('a');
             a.href = blobUrl;
-            a.download = number + '-label.png';
+            a.download = number + '-packlist.png';
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -355,7 +355,7 @@
         var labCopy = document.createElement('button');
         labCopy.className = 'btn btn-secondary';
         labCopy.type = 'button';
-        labCopy.textContent = 'Copy label';
+        labCopy.textContent = 'Copy pack list';
         labCopy.addEventListener('click', function () {
           labCanvas.toBlob(function (blob) {
             if (!navigator.clipboard || !window.ClipboardItem) {
@@ -377,11 +377,11 @@
         rHead.style.marginTop = '1.25rem';
         var rLabel = document.createElement('span');
         rLabel.className = 'hint';
-        rLabel.textContent = 'Receipt text (32 columns)';
+        rLabel.textContent = 'Pack list text (32 columns)';
         var rCopy = document.createElement('button');
         rCopy.className = 'btn btn-secondary';
         rCopy.type = 'button';
-        rCopy.textContent = 'Copy receipt';
+        rCopy.textContent = 'Copy pack list text';
         rHead.appendChild(rLabel);
         rHead.appendChild(rCopy);
 

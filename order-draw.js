@@ -425,7 +425,7 @@
   }
 
   // ---- Thermal label --------------------------------------------------------
-  // A second layout for the 3-inch thermal printer: pure black on white, one
+  // A second layout for the 3-inch thermal printer, the pack list: pure black on white, one
   // column, big bold type, nothing cut short. It is drawn 1:1 at the printer's
   // own width (576 dots, the printable width of 3-inch paper at 203 dpi) so
   // nothing is rescaled on the way to the paper.
@@ -486,17 +486,12 @@
       y += thick + gapAfter;
     }
 
-    // Head: invoice number, then batch on the same line.
+    // Head: what this is, then the invoice number and the date.
+    add("PACK LIST", 22, 700, "left", 4, 0);
     ctx.font = font(34, 700);
     y += 4;
     steps.push({ k: "text", s: data.number || "ORDER", x: X, y: y + 34, size: 34, weight: 700, align: "left" });
-    if (data.batch) {
-      steps.push({ k: "text", s: data.batch, x: R, y: y + 34, size: 22, weight: 400, align: "right" });
-    }
     y += 34;
-
-    var state = [data.sellerStatus, data.status].filter(Boolean).join("  /  ");
-    if (state) addWrapped(state.toUpperCase(), 24, 700, 2, 8);
     if (data.date) add(String(data.date), 22, 400, "left", 4, 0);
 
     rule(4, 12, 10);
@@ -541,15 +536,6 @@
     }
     money("TOTAL", "PHP " + plain(data.total), 30, 700, 8);
     if (num(data.paid) > 0) money("Paid", "- PHP " + plain(data.paid), 24, 400, 6);
-    if (num(data.balance) > 0) {
-      // An inverted bar, so what is still owed can't be missed on the packed box.
-      var top = y + 12;
-      var h = 52;
-      steps.push({ k: "bar", y: top, h: h });
-      steps.push({ k: "text", s: "BALANCE", x: X + 10, y: top + 36, size: 30, weight: 700, align: "left", inv: true });
-      steps.push({ k: "text", s: "PHP " + plain(data.balance), x: R - 10, y: top + 36, size: 30, weight: 700, align: "right", inv: true });
-      y = top + h;
-    }
 
     rule(4, 14, 6);
     var n = lines.length;
@@ -580,11 +566,8 @@
       } else if (s.k === "dash") {
         ctx.fillStyle = "#000";
         for (var x = LABEL_PAD; x < LABEL_W - LABEL_PAD; x += 12) ctx.fillRect(x, s.y, 6, 2);
-      } else if (s.k === "bar") {
-        ctx.fillStyle = "#000";
-        ctx.fillRect(LABEL_PAD, s.y, LABEL_IN, s.h);
       } else {
-        text(ctx, s.s, s.x, s.y, { size: s.size, weight: s.weight, color: s.inv ? "#fff" : "#000", align: s.align });
+        text(ctx, s.s, s.x, s.y, { size: s.size, weight: s.weight, color: "#000", align: s.align });
       }
     });
 
@@ -602,7 +585,7 @@
     return canvas;
   }
 
-  // The same label as receipt-style text: short fixed-width lines, so it
+  // The same pack list as receipt-style text: short fixed-width lines, so it
   // survives being pasted into a label printer's text box. Every line is at
   // most `cols` characters; names wrap onto the next line instead of running on.
   var RECEIPT_COLS = 32;
@@ -637,10 +620,8 @@
     var out = [];
 
     out.push(dbl);
+    out.push("PACK LIST");
     out.push(data.number || "ORDER");
-    var state = [data.sellerStatus, data.status].filter(Boolean).join(" / ");
-    if (state) wrapCols(state.toUpperCase(), cols).forEach(function (l) { out.push(l); });
-    if (data.batch) out.push(data.batch);
     if (data.date) out.push(String(data.date));
     out.push(dbl);
 
@@ -666,13 +647,7 @@
     }
     out.push(pair("TOTAL (PHP)", plain(data.total), cols));
     if (num(data.paid) > 0) out.push(pair("Paid", "-" + plain(data.paid), cols));
-    if (num(data.balance) > 0) {
-      out.push(dbl);
-      out.push(pair("BALANCE DUE", plain(data.balance), cols));
-      out.push(dbl);
-    } else {
-      out.push(bar);
-    }
+    out.push(bar);
     out.push(lines.length + (lines.length === 1 ? " item" : " items") + " - Thank you!");
 
     return out.join("\n");
