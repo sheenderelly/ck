@@ -424,12 +424,268 @@
     return out.join("\n");
   }
 
+  // ---- Thermal label --------------------------------------------------------
+  // A second layout for the 3-inch thermal printer: pure black on white, one
+  // column, big bold type, nothing cut short. It is drawn 1:1 at the printer's
+  // own width (576 dots, the printable width of 3-inch paper at 203 dpi) so
+  // nothing is rescaled on the way to the paper.
+  var LABEL_W = 576;
+  var LABEL_PAD = 14;
+  var LABEL_IN = LABEL_W - LABEL_PAD * 2;
+
+  // Like wrap(), but never drops text: every line is kept, and a word wider
+  // than the paper is broken rather than run off the edge.
+  function wrapFull(ctx, str, maxWidth) {
+    var words = String(str == null ? "" : str).split(/\s+/).filter(Boolean);
+    var lines = [];
+    var line = "";
+    words.forEach(function (word) {
+      var next = line ? line + " " + word : word;
+      if (ctx.measureText(next).width <= maxWidth) { line = next; return; }
+      if (line) lines.push(line);
+      line = "";
+      while (ctx.measureText(word).width > maxWidth && word.length > 1) {
+        var cut = word.length - 1;
+        while (cut > 1 && ctx.measureText(word.slice(0, cut)).width > maxWidth) cut--;
+        lines.push(word.slice(0, cut));
+        word = word.slice(cut);
+      }
+      line = word;
+    });
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  function plain(n) {
+    return Math.round(num(n)).toLocaleString("en-US");
+  }
+
+  // Builds the label as a list of drawing steps first, so the paper can be cut
+  // to the exact height before anything is painted.
+  function labelSteps(ctx, data) {
+    var steps = [];
+    var y = LABEL_PAD;
+    var X = LABEL_PAD;
+    var R = LABEL_W - LABEL_PAD;
+
+    function add(str, size, weight, align, gapBefore, gapAfter) {
+      ctx.font = font(size, weight);
+      y += gapBefore || 0;
+      y += size;
+      steps.push({ k: "text", s: str, x: align === "right" ? R : X, y: y, size: size, weight: weight, align: align || "left" });
+      y += gapAfter || 0;
+    }
+    function addWrapped(str, size, weight, maxLines, gap) {
+      ctx.font = font(size, weight);
+      var lines = wrapFull(ctx, str, LABEL_IN).slice(0, maxLines || 99);
+      lines.forEach(function (ln, i) { add(ln, size, weight, "left", i ? 4 : gap || 0, 0); });
+    }
+    function rule(thick, gapBefore, gapAfter) {
+      y += gapBefore;
+      steps.push({ k: "rule", y: y, h: thick });
+      y += thick + gapAfter;
+    }
+
+    // Head: invoice number, then batch on the same line.
+    ctx.font = font(34, 700);
+    y += 4;
+    steps.push({ k: "text", s: data.number || "ORDER", x: X, y: y + 34, size: 34, weight: 700, align: "left" });
+    if (data.batch) {
+      steps.push({ k: "text", s: data.batch, x: R, y: y + 34, size: 22, weight: 400, align: "right" });
+    }
+    y += 34;
+
+    var state = [data.sellerStatus, data.status].filter(Boolean).join("  /  ");
+    if (state) addWrapped(state.toUpperCase(), 24, 700, 2, 8);
+    if (data.date) add(String(data.date), 22, 400, "left", 4, 0);
+
+    rule(4, 12, 10);
+
+    // Who it goes to.
+    addWrapped(data.buyer || "-", 30, 700, 2, 0);
+    if (data.receiver && data.receiver !== data.buyer) addWrapped("Attn: " + data.receiver, 24, 400, 2, 6);
+    if (data.address) addWrapped(data.address, 24, 400, 6, 6);
+    if (data.phone) add(String(data.phone), 26, 700, "left", 6, 0);
+
+    rule(4, 14, 8);
+
+    // Items: the name gets the whole width, with quantity and amount on a line
+    // of their own beneath it.
+    var lines = data.lines || [];
+    lines.forEach(function (l, i) {
+      if (i) {
+        steps.push({ k: "dash", y: y + 6 });
+        y += 14;
+      }
+      addWrapped(String(l["product name"] == null ? "" : l["product name"]).trim(), 24, 700, 5, 6);
+      var qty = num(l.qty) || 1;
+      var left = qty + " x " + plain(l["list price"]);
+      var base = y + 6 + 26;
+      steps.push({ k: "text", s: left, x: X, y: base, size: 24, weight: 400, align: "left" });
+      steps.push({ k: "text", s: plain(l.amount), x: R, y: base, size: 26, weight: 700, align: "right" });
+      y = base + 4;
+    });
+
+    rule(4, 12, 6);
+
+    // Totals.
+    function money(label, value, size, weight, gap) {
+      y += gap;
+      y += size;
+      steps.push({ k: "text", s: label, x: X, y: y, size: size, weight: weight, align: "left" });
+      steps.push({ k: "text", s: value, x: R, y: y, size: size, weight: weight, align: "right" });
+    }
+    if (num(data.shipping)) {
+      money("Subtotal", "PHP " + plain(data.subtotal), 24, 400, 6);
+      money("Shipping", "PHP " + plain(data.shipping), 24, 400, 4);
+    }
+    money("TOTAL", "PHP " + plain(data.total), 30, 700, 8);
+    if (num(data.paid) > 0) money("Paid", "- PHP " + plain(data.paid), 24, 400, 6);
+    if (num(data.balance) > 0) {
+      // An inverted bar, so what is still owed can't be missed on the packed box.
+      var top = y + 12;
+      var h = 52;
+      steps.push({ k: "bar", y: top, h: h });
+      steps.push({ k: "text", s: "BALANCE", x: X + 10, y: top + 36, size: 30, weight: 700, align: "left", inv: true });
+      steps.push({ k: "text", s: "PHP " + plain(data.balance), x: R - 10, y: top + 36, size: 30, weight: 700, align: "right", inv: true });
+      y = top + h;
+    }
+
+    rule(4, 14, 6);
+    var n = lines.length;
+    add(n + (n === 1 ? " item" : " items") + "  -  Thank you!", 22, 400, "left", 6, 0);
+
+    return { steps: steps, height: y + LABEL_PAD };
+  }
+
+  function drawLabel(canvas, data) {
+    var plan = labelSteps(scratch(), data);
+
+    canvas.width = LABEL_W;
+    canvas.height = plan.height;
+    // Shown at the same width it prints at on screen, so what you see is what
+    // comes out, rather than being stretched to the panel.
+    canvas.style.width = Math.min(LABEL_W, 576) + "px";
+    canvas.style.maxWidth = "100%";
+    canvas.style.height = "auto";
+
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, LABEL_W, plan.height);
+
+    plan.steps.forEach(function (s) {
+      if (s.k === "rule") {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(LABEL_PAD, s.y, LABEL_IN, s.h);
+      } else if (s.k === "dash") {
+        ctx.fillStyle = "#000";
+        for (var x = LABEL_PAD; x < LABEL_W - LABEL_PAD; x += 12) ctx.fillRect(x, s.y, 6, 2);
+      } else if (s.k === "bar") {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(LABEL_PAD, s.y, LABEL_IN, s.h);
+      } else {
+        text(ctx, s.s, s.x, s.y, { size: s.size, weight: s.weight, color: s.inv ? "#fff" : "#000", align: s.align });
+      }
+    });
+
+    // Thermal heads only print black or nothing. Anything grey is dithered into
+    // speckle, which is what makes small text look rough, so settle every pixel
+    // to one or the other here.
+    var img = ctx.getImageData(0, 0, LABEL_W, plan.height);
+    var d = img.data;
+    for (var i = 0; i < d.length; i += 4) {
+      var v = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114 < 150 ? 0 : 255;
+      d[i] = d[i + 1] = d[i + 2] = v;
+      d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return canvas;
+  }
+
+  // The same label as receipt-style text: short fixed-width lines, so it
+  // survives being pasted into a label printer's text box. Every line is at
+  // most `cols` characters; names wrap onto the next line instead of running on.
+  var RECEIPT_COLS = 32;
+
+  function wrapCols(str, cols) {
+    var words = String(str == null ? "" : str).split(/\s+/).filter(Boolean);
+    var out = [];
+    var line = "";
+    words.forEach(function (word) {
+      while (word.length > cols) {
+        if (line) { out.push(line); line = ""; }
+        out.push(word.slice(0, cols));
+        word = word.slice(cols);
+      }
+      var next = line ? line + " " + word : word;
+      if (next.length <= cols) line = next;
+      else { out.push(line); line = word; }
+    });
+    if (line) out.push(line);
+    return out;
+  }
+
+  function pair(left, right, cols) {
+    var gap = cols - left.length - right.length;
+    return left + new Array(Math.max(gap, 1) + 1).join(" ") + right;
+  }
+
+  function asReceipt(data, colsOverride) {
+    var cols = colsOverride || RECEIPT_COLS;
+    var bar = new Array(cols + 1).join("-");
+    var dbl = new Array(cols + 1).join("=");
+    var out = [];
+
+    out.push(dbl);
+    out.push(data.number || "ORDER");
+    var state = [data.sellerStatus, data.status].filter(Boolean).join(" / ");
+    if (state) wrapCols(state.toUpperCase(), cols).forEach(function (l) { out.push(l); });
+    if (data.batch) out.push(data.batch);
+    if (data.date) out.push(String(data.date));
+    out.push(dbl);
+
+    wrapCols(data.buyer || "-", cols).forEach(function (l) { out.push(l); });
+    if (data.receiver && data.receiver !== data.buyer) {
+      wrapCols("Attn: " + data.receiver, cols).forEach(function (l) { out.push(l); });
+    }
+    if (data.address) wrapCols(data.address, cols).forEach(function (l) { out.push(l); });
+    if (data.phone) out.push(String(data.phone));
+    out.push(bar);
+
+    var lines = data.lines || [];
+    lines.forEach(function (l, i) {
+      if (i) out.push("");
+      wrapCols(l["product name"], cols).forEach(function (ln) { out.push(ln); });
+      out.push(pair("  " + (num(l.qty) || 1) + " x " + plain(l["list price"]), plain(l.amount), cols));
+    });
+    out.push(bar);
+
+    if (num(data.shipping)) {
+      out.push(pair("Subtotal", plain(data.subtotal), cols));
+      out.push(pair("Shipping", plain(data.shipping), cols));
+    }
+    out.push(pair("TOTAL (PHP)", plain(data.total), cols));
+    if (num(data.paid) > 0) out.push(pair("Paid", "-" + plain(data.paid), cols));
+    if (num(data.balance) > 0) {
+      out.push(dbl);
+      out.push(pair("BALANCE DUE", plain(data.balance), cols));
+      out.push(dbl);
+    } else {
+      out.push(bar);
+    }
+    out.push(lines.length + (lines.length === 1 ? " item" : " items") + " - Thank you!");
+
+    return out.join("\n");
+  }
+
   global.OrderDraw = {
     draw: draw,
     heightFor: heightFor,
     peso: peso,
     wrap: wrap,
     asText: asText,
+    drawLabel: drawLabel,
+    asReceipt: asReceipt,
     WIDTH: W,
   };
 })(typeof window !== "undefined" ? window : this);

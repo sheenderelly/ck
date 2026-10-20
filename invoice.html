@@ -309,6 +309,107 @@
         block.appendChild(head);
         block.appendChild(pre);
         stageEl.appendChild(block);
+
+        // The same order laid out for the 3-inch thermal printer: black on
+        // white, one column, large type.
+        var lab = document.createElement('div');
+        lab.className = 'text-block';
+
+        var labHead = document.createElement('div');
+        labHead.className = 'text-head';
+        var labLabel = document.createElement('span');
+        labLabel.className = 'hint';
+        labLabel.textContent = 'Label (3-inch thermal)';
+        labHead.appendChild(labLabel);
+        lab.appendChild(labHead);
+
+        var labCanvas = document.createElement('canvas');
+        labCanvas.className = 'label-canvas';
+        labCanvas.setAttribute('role', 'img');
+        labCanvas.setAttribute('aria-label', 'Label for ' + number);
+        lab.appendChild(labCanvas);
+        OrderDraw.drawLabel(labCanvas, data);
+
+        var labActions = document.createElement('div');
+        labActions.className = 'actions';
+
+        var labSave = document.createElement('a');
+        labSave.className = 'btn btn-primary';
+        labSave.textContent = 'Save label';
+        labSave.href = '#';
+        labSave.addEventListener('click', function (e) {
+          e.preventDefault();
+          labCanvas.toBlob(function (blob) {
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            blobUrl = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = number + '-label.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }, 'image/png');
+        });
+        labActions.appendChild(labSave);
+
+        var labCopy = document.createElement('button');
+        labCopy.className = 'btn btn-secondary';
+        labCopy.type = 'button';
+        labCopy.textContent = 'Copy label';
+        labCopy.addEventListener('click', function () {
+          labCanvas.toBlob(function (blob) {
+            if (!navigator.clipboard || !window.ClipboardItem) {
+              labCopy.textContent = 'Not supported';
+              return;
+            }
+            navigator.clipboard
+              .write([new ClipboardItem({ 'image/png': blob })])
+              .then(function () { labCopy.textContent = 'Copied'; })
+              .catch(function () { labCopy.textContent = 'Copy failed'; });
+          }, 'image/png');
+        });
+        labActions.appendChild(labCopy);
+        lab.appendChild(labActions);
+
+        // And as receipt-style text, for printer apps that take pasted text.
+        var rHead = document.createElement('div');
+        rHead.className = 'text-head';
+        rHead.style.marginTop = '1.25rem';
+        var rLabel = document.createElement('span');
+        rLabel.className = 'hint';
+        rLabel.textContent = 'Receipt text (32 columns)';
+        var rCopy = document.createElement('button');
+        rCopy.className = 'btn btn-secondary';
+        rCopy.type = 'button';
+        rCopy.textContent = 'Copy receipt';
+        rHead.appendChild(rLabel);
+        rHead.appendChild(rCopy);
+
+        var rPre = document.createElement('pre');
+        rPre.style.whiteSpace = 'pre';
+        rPre.style.overflowX = 'auto';
+        rPre.textContent = OrderDraw.asReceipt(data);
+
+        rCopy.addEventListener('click', function () {
+          var done = function () { rCopy.textContent = 'Copied'; };
+          var failed = function () { rCopy.textContent = 'Copy failed'; };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(rPre.textContent).then(done).catch(failed);
+            return;
+          }
+          try {
+            var range = document.createRange();
+            range.selectNodeContents(rPre);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            done();
+          } catch (e) { failed(); }
+        });
+
+        lab.appendChild(rHead);
+        lab.appendChild(rPre);
+        stageEl.appendChild(lab);
       })
       .catch(function (err) {
         if (current !== number) return;
