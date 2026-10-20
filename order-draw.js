@@ -251,35 +251,16 @@
     // h5 on the site: uppercase, letterspaced, small.
     text(ctx, "ORDER", PAD, y, { size: 30, weight: 700, spacing: 4, color: primary });
 
-    // Status reads as the site's code chip: elevated fill, bordered, accent text.
-    if (data.status) {
-      ctx.font = font(13, 400);
-      var sw = ctx.measureText(data.status).width + 24;
-      var unpaid = num(data.balance) > 0;
-      box(ctx, X_RIGHT - sw, PAD + 6, sw, 28, 4, t["--bg-elevated"],
-          unpaid ? t["--error"] : t["--success"]);
-      text(ctx, data.status, X_RIGHT - sw / 2, PAD + 25, {
-        size: 13,
-        color: unpaid ? t["--error"] : t["--success"],
-        align: "center",
-      });
-    }
-
     y += 28;
     text(ctx, data.number, PAD, y, { size: 18, weight: 700, color: accent });
-    if (data.batch) text(ctx, data.batch, X_RIGHT, y, { size: 13, color: muted, align: "right" });
 
     // Buyer and date
     y += 44;
     text(ctx, "BILLED TO", PAD, y, { size: 11, color: secondary, spacing: 1.5, weight: 700 });
-    text(ctx, "DATE", X_RIGHT, y, { size: 11, color: secondary, align: "right", spacing: 1.5, weight: 700 });
 
     block.forEach(function (item) {
       y += item.gap;
       text(ctx, item.text, PAD, y, { size: item.size, weight: item.weight, color: item.color });
-      if (item === block[0] && data.date) {
-        text(ctx, data.date, X_RIGHT, y, { size: 15, color: primary, align: "right" });
-      }
     });
 
     y += 18;
@@ -396,9 +377,6 @@
     var head = [data.number, data.buyer].filter(Boolean).join("｜");
     if (head) out.push(head);
 
-    var state = [data.sellerStatus, data.status].filter(Boolean).join(", ");
-    if (state) out.push(state);
-
     var lines = data.lines || [];
     if (lines.length) {
       if (out.length) out.push("");
@@ -503,37 +481,28 @@
 
     rule(4, 14, 8);
 
-    // Items: the name gets the whole width, with quantity and amount on a line
-    // of their own beneath it.
+    // Items: a tick box, the name, and the quantity big at the right so it is
+    // read at a glance. No prices: this sheet is for packing, not billing.
+    var BOX = 28;
+    var QTY_W = 90;
+    var NAME_X = X + BOX + 16;
     var lines = data.lines || [];
     lines.forEach(function (l, i) {
       if (i) {
         steps.push({ k: "dash", y: y + 6 });
         y += 14;
       }
-      addWrapped(String(l["product name"] == null ? "" : l["product name"]).trim(), 24, 700, 5, 6);
-      var qty = num(l.qty) || 1;
-      var left = qty + " x " + plain(l["list price"]);
-      var base = y + 6 + 26;
-      steps.push({ k: "text", s: left, x: X, y: base, size: 24, weight: 400, align: "left" });
-      steps.push({ k: "text", s: plain(l.amount), x: R, y: base, size: 26, weight: 700, align: "right" });
-      y = base + 4;
+      ctx.font = font(24, 700);
+      var name = String(l["product name"] == null ? "" : l["product name"]).trim();
+      var wrapped = wrapFull(ctx, name, R - QTY_W - NAME_X).slice(0, 6);
+      var top = y + 10;
+      steps.push({ k: "check", x: X, y: top + 2, size: BOX });
+      wrapped.forEach(function (ln, n) {
+        steps.push({ k: "text", s: ln, x: NAME_X, y: top + 24 + n * 30, size: 24, weight: 700, align: "left" });
+      });
+      steps.push({ k: "text", s: "x" + (num(l.qty) || 1), x: R, y: top + 28, size: 34, weight: 700, align: "right" });
+      y = top + Math.max(wrapped.length * 30, BOX + 6);
     });
-
-    rule(4, 12, 6);
-
-    // Totals.
-    function money(label, value, size, weight, gap) {
-      y += gap;
-      y += size;
-      steps.push({ k: "text", s: label, x: X, y: y, size: size, weight: weight, align: "left" });
-      steps.push({ k: "text", s: value, x: R, y: y, size: size, weight: weight, align: "right" });
-    }
-    if (num(data.shipping)) {
-      money("Subtotal", "PHP " + plain(data.subtotal), 24, 400, 6);
-      money("Shipping", "PHP " + plain(data.shipping), 24, 400, 4);
-    }
-    money("TOTAL", "PHP " + plain(data.total), 30, 700, 8);
 
     rule(4, 14, 6);
     var n = lines.length;
@@ -561,6 +530,10 @@
       if (s.k === "rule") {
         ctx.fillStyle = "#000";
         ctx.fillRect(LABEL_PAD, s.y, LABEL_IN, s.h);
+      } else if (s.k === "check") {
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(s.x + 1.5, s.y + 1.5, s.size - 3, s.size - 3);
       } else if (s.k === "dash") {
         ctx.fillStyle = "#000";
         for (var x = LABEL_PAD; x < LABEL_W - LABEL_PAD; x += 12) ctx.fillRect(x, s.y, 6, 2);
@@ -633,16 +606,12 @@
     var lines = data.lines || [];
     lines.forEach(function (l, i) {
       if (i) out.push("");
-      wrapCols(l["product name"], cols).forEach(function (ln) { out.push(ln); });
-      out.push(pair("  " + (num(l.qty) || 1) + " x " + plain(l["list price"]), plain(l.amount), cols));
+      var qty = "x" + (num(l.qty) || 1);
+      var rows = wrapCols(l["product name"], cols - qty.length - 1);
+      rows.forEach(function (ln, n) {
+        out.push(n === 0 ? pair(ln, qty, cols) : ln);
+      });
     });
-    out.push(bar);
-
-    if (num(data.shipping)) {
-      out.push(pair("Subtotal", plain(data.subtotal), cols));
-      out.push(pair("Shipping", plain(data.shipping), cols));
-    }
-    out.push(pair("TOTAL (PHP)", plain(data.total), cols));
     out.push(bar);
     out.push(lines.length + (lines.length === 1 ? " item" : " items") + " - Thank you!");
 
