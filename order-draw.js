@@ -209,7 +209,10 @@
   function heightFor(data, ctx) {
     var lines = (data.lines || []).length;
     var t = tokens();
-    var head = 150 + blockHeight(buyerBlock(ctx || scratch(), data, t)) + 18 + 28 + 12;
+    // The title and number run down the left, the buyer down the right: the
+    // header is as tall as whichever is longer.
+    var bottom = Math.max(PAD + 58, PAD + 30 + blockHeight(buyerBlock(ctx || scratch(), data, t)));
+    var head = bottom + 66;
     return (
       head + lines * ROW_H + TOTALS_GAP + totalsAdvance(data) - ROW_STRONG +
       (owes(data) ? QR_SECTION_H : 0) + FOOT_H
@@ -254,16 +257,16 @@
     y += 28;
     text(ctx, data.number, PAD, y, { size: 18, weight: 700, color: accent });
 
-    // Buyer and date
-    y += 44;
-    text(ctx, "BILLED TO", PAD, y, { size: 11, color: secondary, spacing: 1.5, weight: 700 });
+    // Buyer, in the space to the right of the title.
+    var by = PAD + 30;
+    text(ctx, "BILLED TO", X_RIGHT, by, { size: 11, color: secondary, align: "right", spacing: 1.5, weight: 700 });
 
     block.forEach(function (item) {
-      y += item.gap;
-      text(ctx, item.text, PAD, y, { size: item.size, weight: item.weight, color: item.color });
+      by += item.gap;
+      text(ctx, item.text, X_RIGHT, by, { size: item.size, weight: item.weight, color: item.color, align: "right" });
     });
 
-    y += 18;
+    y = Math.max(y, by) + 18;
     rule(ctx, y, accent, 2);
 
     // Column headings, in the site's h6 idiom
