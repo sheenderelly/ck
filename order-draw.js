@@ -492,7 +492,6 @@
     y += 4;
     steps.push({ k: "text", s: data.number || "ORDER", x: X, y: y + 34, size: 34, weight: 700, align: "left" });
     y += 34;
-    if (data.date) add(String(data.date), 22, 400, "left", 4, 0);
 
     rule(4, 12, 10);
 
@@ -621,7 +620,6 @@
     out.push(dbl);
     out.push("PACK LIST");
     out.push(data.number || "ORDER");
-    if (data.date) out.push(String(data.date));
     out.push(dbl);
 
     wrapCols(data.buyer || "-", cols).forEach(function (l) { out.push(l); });

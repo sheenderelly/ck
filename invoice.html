@@ -12,6 +12,13 @@
 <link rel="stylesheet" href="/order-fonts.css">
 <style>
   /* Only what the shared stylesheet has no opinion about. */
+  /* The shared stylesheet pins the page to 100vh, which on a phone includes the
+     area behind the browser's toolbar, so the bottom of a long order sat
+     underneath it and could not be scrolled into view. dvh tracks the visible
+     height instead. */
+  body { height: 100vh; height: 100dvh; }
+  .tool-view { padding-bottom: calc(2.5rem + env(safe-area-inset-bottom)); }
+
   .order-layout {
     display: grid;
     grid-template-columns: 300px 1fr;
