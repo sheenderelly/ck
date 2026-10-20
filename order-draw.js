@@ -535,7 +535,6 @@
       money("Shipping", "PHP " + plain(data.shipping), 24, 400, 4);
     }
     money("TOTAL", "PHP " + plain(data.total), 30, 700, 8);
-    if (num(data.paid) > 0) money("Paid", "- PHP " + plain(data.paid), 24, 400, 6);
 
     rule(4, 14, 6);
     var n = lines.length;
@@ -646,7 +645,6 @@
       out.push(pair("Shipping", plain(data.shipping), cols));
     }
     out.push(pair("TOTAL (PHP)", plain(data.total), cols));
-    if (num(data.paid) > 0) out.push(pair("Paid", "-" + plain(data.paid), cols));
     out.push(bar);
     out.push(lines.length + (lines.length === 1 ? " item" : " items") + " - Thank you!");
 
