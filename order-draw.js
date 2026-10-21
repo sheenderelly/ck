@@ -69,6 +69,20 @@
     return "+63 " + d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
   }
 
+  // Lines that are charges rather than goods. They never appear in any item
+  // list, image or text. The totals are the invoice's own and stay as they are,
+  // so what the buyer owes is unchanged.
+  var HIDDEN_LINES = ["priority shipping"];
+
+  function visible(data) {
+    var keep = (data.lines || []).filter(function (l) {
+      var name = String(l["product name"] == null ? "" : l["product name"])
+        .replace(/\s+/g, " ").trim().toLowerCase();
+      return HIDDEN_LINES.indexOf(name) === -1;
+    });
+    return Object.assign({}, data, { lines: keep });
+  }
+
   function font(size, weight) {
     return (weight || 400) + " " + size + "px " + FONT;
   }
@@ -220,6 +234,7 @@
   }
 
   function heightFor(data, ctx) {
+    data = visible(data);
     var lines = (data.lines || []).length;
     var t = tokens();
     // The title and number run down the left, the buyer down the right: the
@@ -233,6 +248,7 @@
   }
 
   function draw(canvas, data) {
+    data = visible(data);
     var t = tokens();
     var lines = data.lines || [];
     var block = buyerBlock(scratch(), data, t);
@@ -387,6 +403,7 @@
   // in the spec — paid and balance — appear only when there is a value, and
   // shipping follows the same rule so the items and the total still add up.
   function asText(data) {
+    data = visible(data);
     var out = [];
 
     // Header: the invoice and who it is for, then where it stands.
@@ -528,6 +545,7 @@
   }
 
   function drawLabel(canvas, data) {
+    data = visible(data);
     var plan = labelSteps(scratch(), data);
 
     canvas.width = LABEL_W;
@@ -601,6 +619,7 @@
   }
 
   function asReceipt(data, colsOverride) {
+    data = visible(data);
     var cols = colsOverride || RECEIPT_COLS;
     var bar = new Array(cols + 1).join("-");
     var dbl = new Array(cols + 1).join("=");
