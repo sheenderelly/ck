@@ -471,6 +471,14 @@
     return Math.round(num(n)).toLocaleString("en-US");
   }
 
+  // Shipping is billed as a line on the order but is not something to pack, so
+  // it stays off every pack list (it still counts on the order itself).
+  function packLines(data) {
+    return (data.lines || []).filter(function (l) {
+      return !/priority\s+shipping/i.test(String(l["product name"] == null ? "" : l["product name"]));
+    });
+  }
+
   // Builds the label as a list of drawing steps first, so the paper can be cut
   // to the exact height before anything is painted.
   function labelSteps(ctx, data) {
@@ -519,7 +527,7 @@
     var BOX = 28;
     var QTY_W = 90;
     var NAME_X = X + BOX + 16;
-    var lines = data.lines || [];
+    var lines = packLines(data);
     lines.forEach(function (l, i) {
       if (i) {
         steps.push({ k: "dash", y: y + 6 });
@@ -638,7 +646,7 @@
     if (data.phone) out.push(phoneFmt(data.phone));
     out.push(bar);
 
-    var lines = data.lines || [];
+    var lines = packLines(data);
     lines.forEach(function (l, i) {
       if (i) out.push("");
       var qty = "x" + (num(l.qty) || 1);
