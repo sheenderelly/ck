@@ -10,7 +10,7 @@
     try { var t = localStorage.getItem('sheen-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
   </script>
   <link rel="stylesheet" href="style.css?v=11">
-  <link rel="stylesheet" href="home.css?v=3">
+  <link rel="stylesheet" href="home.css?v=4">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
@@ -21,20 +21,13 @@
   <!-- NAVBAR -->
   <header class="site-nav" id="site-nav">
     <div class="wrap nav-bar">
-      <a class="brand-mark" href="#top" data-home-link>
+      <a class="brand-mark" href="#nav" data-home-link>
         <i data-lucide="leaf"></i>
         <div>
           <div class="brand-title">ck</div>
           <div class="brand-sub">work・life・etc</div>
         </div>
       </a>
-      <ul class="nav-links">
-        <li><a href="#nav" data-home-link>Nav</a></li>
-        <li><a href="#workflow" data-home-link>Workflow</a></li>
-        <li><a href="#stack" data-home-link>Stack</a></li>
-        <li><a href="#about" data-home-link>About</a></li>
-        <li><a href="#questions" data-home-link>Questions</a></li>
-      </ul>
       <div class="nav-actions">
         <div class="theme-switch" role="group" aria-label="Theme toggle">
           <button id="theme-dark" class="active" type="button"><i data-lucide="moon"></i> Dark</button>
@@ -45,12 +38,7 @@
       </div>
     </div>
     <div class="wrap">
-      <nav class="nav-drawer" id="nav-drawer" aria-label="Sections">
-        <a href="#nav" data-home-link>Nav</a>
-        <a href="#workflow" data-home-link>Workflow</a>
-        <a href="#stack" data-home-link>Stack</a>
-        <a href="#about" data-home-link>About</a>
-        <a href="#questions" data-home-link>Questions</a>
+      <nav class="nav-drawer" id="nav-drawer" aria-label="Menu">
         <button class="btn btn-ghost theme-flip" type="button">Switch to light</button>
       </nav>
     </div>
@@ -60,47 +48,8 @@
 
     <div id="home" class="home-view view-active">
 
-      <!-- HERO -->
-      <section class="hero ruled" id="top">
-        <div class="wrap">
-          <div class="hero-copy">
-            <div class="h-label reveal" style="--i:0">ck · work・life・etc · Osaka</div>
-            <h1 class="h-display reveal" style="--i:1">Small tools for the work <em>in between</em>.</h1>
-            <p class="lede reveal" style="--i:2">A private workbench for the jobs that sit between code and operations — UK client work, PasaBuy orders, developer tools, and the few pages the public sees.</p>
-            <ul class="facts reveal" style="--i:3">
-              <li><b>04</b> hubs</li>
-              <li>EN · 日本語</li>
-              <li>No build step</li>
-            </ul>
-          </div>
-          <div class="seal-slot" aria-hidden="true">
-            <svg class="seal" viewBox="0 0 200 200">
-              <defs>
-                <path id="seal-path" d="M100,100 m-82,0 a82,82 0 1,1 164,0 a82,82 0 1,1 -164,0"/>
-              </defs>
-              <circle class="draw" pathLength="1" cx="100" cy="100" r="97"/>
-              <circle class="draw late" pathLength="1" cx="100" cy="100" r="68"/>
-              <g class="ring">
-                <text><textPath href="#seal-path" textLength="512" lengthAdjust="spacing">CK · WORK · LIFE · ETC · MADE IN OSAKA · </textPath></text>
-              </g>
-              <circle class="dash" cx="100" cy="100" r="58"/>
-              <g class="leaf" transform="translate(76 76) scale(2)">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-              </g>
-            </svg>
-          </div>
-        </div>
-      </section>
-
-      <!-- § 01 NAV -->
       <section class="section" id="nav">
         <div class="wrap">
-          <div class="section-head">
-            <span class="stamp reveal">§ 01</span>
-            <h2 class="h-section reveal"><em>Nav</em>.</h2>
-          </div>
-
           <div class="applets hubs">
             <a class="applet placeholder reveal" style="--i:0" href="/ukhub">
               <span class="applet-top"><span class="applet-glyph">UK</span><span class="mono-tag">Placeholder</span></span>
@@ -125,179 +74,6 @@
           </div>
         </div>
       </section>
-
-      <!-- § 02 WORKFLOW -->
-      <section class="section tinted" id="workflow">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="stamp reveal">§ 02</span>
-            <h2 class="h-section reveal">Notion to buyer, in <em>four</em> steps.</h2>
-            <p class="lede reveal">Where the Orders applet sits in the PasaBuy flow.</p>
-          </div>
-          <ol class="steps reveal">
-            <li class="step reveal" style="--i:1">
-              <span class="step-no">01</span>
-              <h3>Log it in Notion</h3>
-              <p>The invoice and its lines, priced from the price book.</p>
-            </li>
-            <li class="step reveal" style="--i:2">
-              <span class="step-no">02</span>
-              <h3>Open Orders</h3>
-              <p>Only invoices not yet finished on both the buyer and seller side are listed.</p>
-            </li>
-            <li class="step reveal" style="--i:3">
-              <span class="step-no">03</span>
-              <h3>Save or copy</h3>
-              <p>An order image, a 3-inch pack list, or plain text for the chat thread.</p>
-            </li>
-            <li class="step reveal" style="--i:4">
-              <span class="step-no">04</span>
-              <h3>Buyer pays</h3>
-              <p>The QR and pay-here link open the payment page, and drop off once it is paid.</p>
-            </li>
-          </ol>
-        </div>
-      </section>
-
-      <!-- § 03 STACK -->
-      <section class="section ruled" id="stack">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="stamp reveal">§ 03</span>
-            <h2 class="h-section reveal">Plain parts, <em>no</em> framework.</h2>
-            <p class="lede reveal">What the hub is made of, layer by layer.</p>
-          </div>
-          <div class="stack">
-            <div class="stack-row reveal" style="--i:0"><span class="layer">Pages</span><span class="what">Static HTML, CSS and JavaScript with clean URLs</span><span class="tool">Vercel</span></div>
-            <div class="stack-row reveal" style="--i:1"><span class="layer">Gate</span><span class="what">One password and a signed session cookie</span><span class="tool">Edge middleware</span></div>
-            <div class="stack-row reveal" style="--i:2"><span class="layer">Data</span><span class="what">Invoices, lines, clients and the price book</span><span class="tool">Notion API</span></div>
-            <div class="stack-row reveal" style="--i:3"><span class="layer">Images</span><span class="what">Orders and icons drawn in your browser</span><span class="tool">Canvas 2D</span></div>
-            <div class="stack-row reveal" style="--i:4"><span class="layer">QR codes</span><span class="what">Generated on the page, no outside service</span><span class="tool">qrcode-generator</span></div>
-            <div class="stack-row reveal" style="--i:5"><span class="layer">Type &amp; icons</span><span class="what">One monospace face, line icons</span><span class="tool">Roboto Mono · Lucide</span></div>
-          </div>
-          <p class="stack-note">No build step and no database of its own — Notion holds the data, and only Orders reads it.</p>
-        </div>
-      </section>
-
-      <!-- THEMES -->
-      <section class="section" id="themes">
-        <div class="wrap split">
-          <div class="split-copy">
-            <div class="h-label reveal">Light &amp; dark</div>
-            <h2 class="h-section reveal">Moss by night, <em>paper</em> by day.</h2>
-            <p class="lede reveal">The saved choice carries over to Orders, the images it saves, and every other page on this device. Palettes on file: Sheen, Synchron and Salesforce.</p>
-          </div>
-          <div class="duo reveal" aria-hidden="true">
-            <div class="duo-pane dark">
-              <span class="mono-tag">Dark · moss</span>
-              <div class="duo-card"><b>Change Case</b><span>Convert text between cases.</span></div>
-              <div class="duo-card"><b>Orders</b><span>PHP 10,900 · balance due</span></div>
-              <div class="swatches"><i style="background:#1a1c18"></i><i style="background:#242821"></i><i style="background:#a9ba9d"></i><i style="background:#d4e157"></i></div>
-            </div>
-            <div class="duo-pane light">
-              <span class="mono-tag">Light · paper</span>
-              <div class="duo-card"><b>Change Case</b><span>Convert text between cases.</span></div>
-              <div class="duo-card"><b>Orders</b><span>PHP 10,900 · balance due</span></div>
-              <div class="swatches"><i style="background:#f7f5ec"></i><i style="background:#ffffff"></i><i style="background:#4a5441"></i><i style="background:#6b8e23"></i></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ABOUT -->
-      <section class="section tinted" id="about">
-        <div class="wrap split">
-          <div class="portrait reveal" aria-hidden="true">
-            <div class="portrait-inner">
-              <span class="mono-big">シン</span>
-              <span class="mono-tag">Osaka</span>
-            </div>
-          </div>
-          <div class="split-copy">
-            <div class="h-label reveal">About</div>
-            <h2 class="h-section reveal">Made by <em>Sheen</em>.</h2>
-            <p class="subtitle reveal">System engineer &amp; Salesforce administrator</p>
-            <p class="lede reveal">A computer science background and five-plus years across technical support, application management and full-stack work. These tools began as shortcuts for the day job — the small conversions and checks that sit between building a system and running a business on it.</p>
-            <ul class="creds reveal">
-              <li>Salesforce admin</li>
-              <li>Apex · LWC · SOQL</li>
-              <li>WordPress</li>
-              <li>APIs &amp; RPA</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      <!-- QUESTIONS -->
-      <section class="section" id="questions">
-        <div class="wrap">
-          <div class="section-head">
-            <span class="stamp reveal">§ 04</span>
-            <h2 class="h-section reveal">Worth <em>knowing</em>.</h2>
-          </div>
-          <div class="faq">
-            <details>
-              <summary>Does anything I paste leave this page?<span class="plus" aria-hidden="true"></span></summary>
-              <p>No. Everything in DevTools runs entirely in your browser. Only Orders talks to a server, and only to read Notion.</p>
-            </details>
-            <details>
-              <summary>Why is there a password?<span class="plus" aria-hidden="true"></span></summary>
-              <p>Orders shows live customer names, addresses and balances, so the whole hub sits behind one login. The QR photo page is the only public part.</p>
-            </details>
-            <details>
-              <summary>Does light or dark carry over?<span class="plus" aria-hidden="true"></span></summary>
-              <p>Yes. Your choice is remembered on this device and used by every page, including Orders and the order images it saves.</p>
-            </details>
-            <details>
-              <summary>Can buyers see their order here?<span class="plus" aria-hidden="true"></span></summary>
-              <p>No. You send them the image or the text. Their QR code and pay-here link go to the public payment page in Notion, not to this site.</p>
-            </details>
-          </div>
-        </div>
-      </section>
-
-      <!-- SHORTCUTS -->
-      <section class="section" id="shortcuts" style="border-top:0;padding-top:0">
-        <div class="wrap">
-          <div class="inverse reveal">
-            <div class="h-label">Shortcuts</div>
-            <div class="shortcuts">
-              <a class="shortcut" href="/invoice"><span class="mono-tag"><i data-lucide="receipt"></i> Orders</span><span>Open invoices</span></a>
-              <a class="shortcut" href="/qr"><span class="mono-tag"><i data-lucide="qr-code"></i> QR</span><span>Public photo page</span></a>
-              <a class="shortcut" href="/branding"><span class="mono-tag"><i data-lucide="book-open"></i> Branding</span><span>Style guide</span></a>
-              <button class="shortcut" type="button" data-open-tool="themes"><span class="mono-tag"><i data-lucide="palette"></i> Themes</span><span>Palettes &amp; CSS</span></button>
-              <button class="shortcut" type="button" id="logout-btn"><span class="mono-tag"><i data-lucide="log-out"></i> Session</span><span>Log out</span></button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- FOOTER -->
-      <footer class="site-foot">
-        <div class="wrap">
-          <div class="foot-top">
-            <a class="brand-mark" href="#top" data-home-link>
-              <i data-lucide="leaf"></i>
-              <div>
-                <div class="brand-title">ck</div>
-                <div class="brand-sub">work・life・etc</div>
-              </div>
-            </a>
-            <ul class="foot-links">
-              <li><a href="#nav" data-home-link>Nav</a></li>
-              <li><a href="#workflow" data-home-link>Workflow</a></li>
-              <li><a href="#stack" data-home-link>Stack</a></li>
-              <li><a href="#about" data-home-link>About</a></li>
-              <li><a href="#questions" data-home-link>Questions</a></li>
-            </ul>
-          </div>
-          <p class="small-print">A private workbench by シン. Everything here sits behind the portal password except the QR photo page. Light or dark is remembered per device.</p>
-          <div class="foot-bottom">
-            <span class="mono-tag">© 2026 ck</span>
-            <span class="mono-tag">Osaka · 大阪</span>
-          </div>
-        </div>
-      </footer>
 
     </div>
 
