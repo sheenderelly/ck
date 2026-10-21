@@ -31,16 +31,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const regRevKana = new RegExp(Object.keys(revKanaMap).join('|'), 'g');
 
     // DOM Elements - Menus
-    const textToolsMenu = document.getElementById('text-tools-menu');
-    const salesforceToolsMenu = document.getElementById('salesforce-tools-menu');
-    const nihonToolsMenu = document.getElementById('nihon-tools-menu');
-    const qrToolsMenu = document.getElementById('qr-tools-menu');
+    const homeView = document.getElementById('home');
     const themesView = document.getElementById('themes-view');
-    // Default starting menu
-    let currentMenu = textToolsMenu;
-
-    // Tab nav
-    const navItems = document.querySelectorAll('.tab-btn');
+    // Every tool returns to the landing page
+    let currentMenu = homeView;
+    let homeScroll = 0;
 
     // Text Tool Views & Elements
     const changeCaseView = document.getElementById('change-case-view');
@@ -83,39 +78,47 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     function showView(viewElement) {
         if (!viewElement) return;
-        
+
+        // Remember where the landing page was, so Back lands on the same applet
+        const onHome = homeView && !homeView.classList.contains('view-hidden');
+        if (onHome && viewElement !== homeView) homeScroll = window.scrollY;
+
         // Hide all views and menus
-        document.querySelectorAll('.tools-menu, .tool-view').forEach(el => {
+        document.querySelectorAll('.home-view, .tools-menu, .tool-view').forEach(el => {
             el.classList.remove('view-active');
             el.classList.add('view-hidden');
         });
-        
+
         // Show target view
         viewElement.classList.remove('view-hidden');
         viewElement.classList.add('view-active');
+        window.scrollTo({ top: viewElement === homeView ? homeScroll : 0, behavior: 'instant' });
     }
 
-    // Tab Category Switcher
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            navItems.forEach(nav => nav.classList.remove('active'));
-            item.classList.add('active');
+    // Section links bring the landing page back first when a tool is open;
+    // the browser then jumps to the anchor as usual.
+    document.querySelectorAll('[data-home-link]').forEach(link => {
+        link.addEventListener('click', () => {
+            if (homeView && homeView.classList.contains('view-hidden')) showView(homeView);
+        });
+    });
 
-            const category = item.dataset.category;
-            if (category === 'text') {
-                currentMenu = textToolsMenu;
-            } else if (category === 'salesforce') {
-                currentMenu = salesforceToolsMenu;
-            } else if (category === 'nihon') {
-                currentMenu = nihonToolsMenu;
-            } else if (category === 'qr') {
-                currentMenu = qrToolsMenu;
-            } else if (category === 'themes') {
-                currentMenu = themesView;
-                initThemes();
-            }
+    // Applet filter chips
+    const filterChips = document.querySelectorAll('.chips [data-filter]');
+    const applets = document.querySelectorAll('.applet');
+    filterChips.forEach(chip => {
+        chip.addEventListener('click', () => {
+            filterChips.forEach(c => c.classList.toggle('active', c === chip));
+            const filter = chip.dataset.filter;
+            applets.forEach(a => { a.hidden = filter !== 'all' && a.dataset.cat !== filter; });
+        });
+    });
 
-            showView(currentMenu);
+    // Themes opens like any other tool
+    document.querySelectorAll('[data-tool="themes"], [data-open-tool="themes"]').forEach(el => {
+        el.addEventListener('click', () => {
+            showView(themesView);
+            initThemes();
         });
     });
 
@@ -791,7 +794,7 @@ export default class ${camel.charAt(0).toUpperCase() + camel.slice(1)} extends L
     }
 
     // Lucide icons
-    lucide.createIcons();
+    if (window.lucide) lucide.createIcons();
 
     // Theme switcher
     const root = document.documentElement;
