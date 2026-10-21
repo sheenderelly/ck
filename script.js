@@ -98,6 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show target view
         viewElement.classList.remove('view-hidden');
         viewElement.classList.add('view-active');
+        // Only the home page keeps the narrow column; everything past it is full width
+        document.body.classList.toggle('wide', viewElement !== homeView);
         window.scrollTo({ top: menuScroll.get(viewElement) || 0, behavior: 'instant' });
 
         // /#devtools reopens DevTools after a reload or from another page

@@ -27,6 +27,12 @@ html:has(body.home) { scroll-behavior: smooth; scroll-padding-top: 88px; }
     padding: 0 40px;
 }
 
+/* Pages past the home page drop the 1200px column and use the full width. */
+body.wide .wrap { max-width: none; }
+body.wide .tool-view,
+body.wide .tools-menu { max-width: none; padding-left: 40px; padding-right: 40px; }
+body.wide .applets:not(.hubs) { grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); }
+
 /* ===== Type scale ===== */
 .h-section {
     font-size: clamp(26px, 3.2vw, 40px);
@@ -72,6 +78,7 @@ html:has(body.home) { scroll-behavior: smooth; scroll-padding-top: 88px; }
 }
 .site-nav .brand-mark { text-decoration: none; margin-right: auto; }
 .site-nav .brand-mark:hover { opacity: 1; }
+.brand-mark .logo { width: 30px; height: 30px; color: var(--accent); flex-shrink: 0; }
 .nav-links {
     display: flex;
     gap: 1.75rem;
@@ -212,6 +219,8 @@ body.home #themes-view { min-height: calc(100vh - 72px); }
 
 @media (max-width: 767px) {
     .wrap { padding: 0 16px; }
+    body.wide .tool-view,
+    body.wide .tools-menu { padding-left: 16px; padding-right: 16px; }
     .site-nav .nav-bar { height: 64px; gap: 1rem; }
     html:has(body.home) { scroll-padding-top: 76px; }
     .section { padding: 64px 0; }

@@ -18,6 +18,10 @@
      height instead. */
   body { height: 100vh; height: 100dvh; }
   .tool-view { padding-bottom: calc(2.5rem + env(safe-area-inset-bottom)); }
+  /* Full width like every page past the home page; the order image keeps a
+     readable size instead of stretching across the screen. */
+  .tool-view { max-width: none; }
+  .stage canvas { max-width: 720px; }
 
   .order-layout {
     display: grid;
