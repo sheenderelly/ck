@@ -10,7 +10,7 @@
     try { var t = localStorage.getItem('sheen-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
   </script>
   <link rel="stylesheet" href="style.css?v=11">
-  <link rel="stylesheet" href="home.css?v=1">
+  <link rel="stylesheet" href="home.css?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
   <!-- NAVBAR -->
   <header class="site-nav" id="site-nav">
     <div class="wrap nav-bar">
-      <a class="brand-mark" href="#top" data-home-link>
+      <a class="brand-mark" href="#applets" data-home-link>
         <i data-lucide="leaf"></i>
         <div>
           <div class="brand-title">DevTools</div>
@@ -60,49 +60,12 @@
 
     <div id="home" class="home-view view-active">
 
-      <!-- HERO -->
-      <section class="hero ruled" id="top">
-        <div class="wrap">
-          <div class="hero-copy">
-            <div class="h-label reveal" style="--i:0">sheen.dev · DevTools · Osaka</div>
-            <h1 class="h-display reveal" style="--i:1">Small tools for the work <em>in between</em>.</h1>
-            <p class="lede reveal" style="--i:2">A private workbench for the jobs that sit between code and operations — reformatting text and phone numbers, building Salesforce icons, checking 社会保険 brackets, and turning Notion invoices into orders a buyer can read.</p>
-            <div class="hero-actions reveal" style="--i:3">
-              <a class="btn btn-primary" href="#applets" data-home-link>Browse applets</a>
-              <a class="btn btn-ghost" href="/invoice">Open orders</a>
-            </div>
-            <ul class="facts reveal" style="--i:4">
-              <li><b>08</b> applets</li>
-              <li>EN · 日本語</li>
-              <li>No build step</li>
-            </ul>
-          </div>
-          <div class="seal-slot" aria-hidden="true">
-            <svg class="seal" viewBox="0 0 200 200">
-              <defs>
-                <path id="seal-path" d="M100,100 m-82,0 a82,82 0 1,1 164,0 a82,82 0 1,1 -164,0"/>
-              </defs>
-              <circle class="draw" pathLength="1" cx="100" cy="100" r="97"/>
-              <circle class="draw late" pathLength="1" cx="100" cy="100" r="68"/>
-              <g class="ring">
-                <text><textPath href="#seal-path" textLength="512" lengthAdjust="spacing">SHEEN.DEV · DEVTOOLS · MADE IN OSAKA · </textPath></text>
-              </g>
-              <circle class="dash" cx="100" cy="100" r="58"/>
-              <g class="leaf" transform="translate(76 76) scale(2)">
-                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
-                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
-              </g>
-            </svg>
-          </div>
-        </div>
-      </section>
-
       <!-- § 01 APPLETS -->
       <section class="section" id="applets">
         <div class="wrap">
           <div class="section-head">
             <span class="stamp reveal">§ 01</span>
-            <h2 class="h-section reveal">Pick an <em>applet</em>.</h2>
+            <h2 class="h-section reveal"><em>Applets</em>.</h2>
             <p class="lede reveal">Everything runs on this page, except Orders, which reads Notion.</p>
           </div>
 
@@ -120,49 +83,41 @@
               <span class="applet-top"><span class="applet-glyph">Aa</span><span class="mono-tag">General</span></span>
               <h3>Change Case</h3>
               <p>Convert text between UPPERCASE, lowercase and Sentence case.</p>
-              <span class="go">Open →</span>
             </button>
             <button class="applet reveal" style="--i:1" type="button" data-tool="kana-width-converter" data-cat="general">
               <span class="applet-top"><span class="applet-glyph">あ</span><span class="mono-tag">General</span></span>
               <h3>Kana Width</h3>
               <p>Switch letters, numbers and kana between full-width and half-width.</p>
-              <span class="go">Open →</span>
             </button>
             <button class="applet reveal" style="--i:2" type="button" data-tool="phone-formatter" data-cat="general">
               <span class="applet-top"><span class="applet-glyph"><i data-lucide="phone"></i></span><span class="mono-tag">General</span></span>
               <h3>Phone</h3>
               <p>Format JP and PH numbers with country codes, hyphens or spaces.</p>
-              <span class="go">Open →</span>
             </button>
             <a class="applet reveal" style="--i:3" href="/invoice" data-cat="general">
               <span class="applet-top"><span class="applet-glyph">₱</span><span class="mono-tag">Notion</span></span>
               <h3>Orders</h3>
               <p>Turn a Notion invoice into an order image, a pack list or chat-ready text.</p>
-              <span class="go">Open →</span>
             </a>
             <button class="applet reveal" style="--i:4" type="button" data-tool="create-icons" data-cat="salesforce">
               <span class="applet-top"><span class="applet-glyph"><i data-lucide="star"></i></span><span class="mono-tag">Salesforce</span></span>
               <h3>Create Icons</h3>
               <p>Paste an SVG, get tab and SLDS icons plus ready-to-paste snippets.</p>
-              <span class="go">Open →</span>
             </button>
             <button class="applet reveal" style="--i:5" type="button" data-tool="social-insurance" data-cat="nihon">
               <span class="applet-top"><span class="applet-glyph">社</span><span class="mono-tag">日本</span></span>
               <h3>社会保険料計算</h3>
               <p>Track April–June pay against your 標準報酬月額 bracket.</p>
-              <span class="go">Open →</span>
             </button>
             <a class="applet reveal" style="--i:6" href="/qr" data-cat="qr">
               <span class="applet-top"><span class="applet-glyph"><i data-lucide="qr-code"></i></span><span class="mono-tag">QR</span></span>
               <h3>Photos</h3>
               <p>The public page a QR scan lands on — no password, no nav.</p>
-              <span class="go">Open →</span>
             </a>
             <button class="applet reveal" style="--i:7" type="button" data-tool="themes" data-cat="themes">
               <span class="applet-top"><span class="applet-glyph"><i data-lucide="palette"></i></span><span class="mono-tag">Themes</span></span>
               <h3>Themes</h3>
               <p>Preview the Sheen, Synchron and Salesforce palettes and copy them as CSS.</p>
-              <span class="go">Open →</span>
             </button>
           </div>
         </div>
@@ -227,11 +182,7 @@
           <div class="split-copy">
             <div class="h-label reveal">Light &amp; dark</div>
             <h2 class="h-section reveal">Moss by night, <em>paper</em> by day.</h2>
-            <p class="lede reveal">Dark and light are one tap apart, and the choice follows you — to Orders, the images it saves, and every other page on this device. Three palettes are ready to copy as CSS: Sheen, Synchron and Salesforce.</p>
-            <div class="btn-row reveal">
-              <button class="btn btn-primary" type="button" data-open-tool="themes">Open themes</button>
-              <button class="btn btn-ghost theme-flip" type="button">Switch to light</button>
-            </div>
+            <p class="lede reveal">The saved choice carries over to Orders, the images it saves, and every other page on this device. Palettes on file: Sheen, Synchron and Salesforce.</p>
           </div>
           <div class="duo reveal" aria-hidden="true">
             <div class="duo-pane dark">
@@ -306,20 +257,13 @@
       <section class="section" id="shortcuts" style="border-top:0;padding-top:0">
         <div class="wrap">
           <div class="inverse reveal">
-            <div class="inverse-copy">
-              <div class="h-label">Shortcuts</div>
-              <h2 class="h-section">Jump straight <em>in</em>.</h2>
-              <p class="lede">The pages you open most, one tap away.</p>
-              <div class="inverse-actions">
-                <a class="btn btn-paper" href="/invoice">Open orders</a>
-                <button class="btn btn-line" type="button" id="logout-btn">Log out</button>
-              </div>
-            </div>
+            <div class="h-label">Shortcuts</div>
             <div class="shortcuts">
               <a class="shortcut" href="/invoice"><span class="mono-tag"><i data-lucide="receipt"></i> Orders</span><span>Open invoices</span></a>
               <a class="shortcut" href="/qr"><span class="mono-tag"><i data-lucide="qr-code"></i> QR</span><span>Public photo page</span></a>
               <a class="shortcut" href="/branding"><span class="mono-tag"><i data-lucide="book-open"></i> Branding</span><span>Style guide</span></a>
               <button class="shortcut" type="button" data-open-tool="themes"><span class="mono-tag"><i data-lucide="palette"></i> Themes</span><span>Palettes &amp; CSS</span></button>
+              <button class="shortcut" type="button" id="logout-btn"><span class="mono-tag"><i data-lucide="log-out"></i> Session</span><span>Log out</span></button>
             </div>
           </div>
         </div>
@@ -329,7 +273,7 @@
       <footer class="site-foot">
         <div class="wrap">
           <div class="foot-top">
-            <a class="brand-mark" href="#top" data-home-link>
+            <a class="brand-mark" href="#applets" data-home-link>
               <i data-lucide="leaf"></i>
               <div>
                 <div class="brand-title">DevTools</div>
@@ -803,6 +747,6 @@
   </main>
 
   <script src="script.js?v=13"></script>
-  <script src="home.js?v=1"></script>
+  <script src="home.js?v=2"></script>
 </body>
 </html>
