@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DevTools — sheen.dev</title>
+  <title>ck — work・life・etc</title>
   <meta name="description" content="A private workbench of small tools for the work between code and operations.">
   <script>
     // Apply the saved theme before first paint so light mode never flashes dark.
     try { var t = localStorage.getItem('sheen-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
   </script>
   <link rel="stylesheet" href="style.css?v=11">
-  <link rel="stylesheet" href="home.css?v=2">
+  <link rel="stylesheet" href="home.css?v=3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
@@ -21,15 +21,15 @@
   <!-- NAVBAR -->
   <header class="site-nav" id="site-nav">
     <div class="wrap nav-bar">
-      <a class="brand-mark" href="#applets" data-home-link>
+      <a class="brand-mark" href="#top" data-home-link>
         <i data-lucide="leaf"></i>
         <div>
-          <div class="brand-title">DevTools</div>
-          <div class="brand-sub">sheen.dev</div>
+          <div class="brand-title">ck</div>
+          <div class="brand-sub">work・life・etc</div>
         </div>
       </a>
       <ul class="nav-links">
-        <li><a href="#applets" data-home-link>Applets</a></li>
+        <li><a href="#nav" data-home-link>Nav</a></li>
         <li><a href="#workflow" data-home-link>Workflow</a></li>
         <li><a href="#stack" data-home-link>Stack</a></li>
         <li><a href="#about" data-home-link>About</a></li>
@@ -46,7 +46,7 @@
     </div>
     <div class="wrap">
       <nav class="nav-drawer" id="nav-drawer" aria-label="Sections">
-        <a href="#applets" data-home-link>Applets</a>
+        <a href="#nav" data-home-link>Nav</a>
         <a href="#workflow" data-home-link>Workflow</a>
         <a href="#stack" data-home-link>Stack</a>
         <a href="#about" data-home-link>About</a>
@@ -60,65 +60,68 @@
 
     <div id="home" class="home-view view-active">
 
-      <!-- § 01 APPLETS -->
-      <section class="section" id="applets">
+      <!-- HERO -->
+      <section class="hero ruled" id="top">
+        <div class="wrap">
+          <div class="hero-copy">
+            <div class="h-label reveal" style="--i:0">ck · work・life・etc · Osaka</div>
+            <h1 class="h-display reveal" style="--i:1">Small tools for the work <em>in between</em>.</h1>
+            <p class="lede reveal" style="--i:2">A private workbench for the jobs that sit between code and operations — UK client work, PasaBuy orders, developer tools, and the few pages the public sees.</p>
+            <ul class="facts reveal" style="--i:3">
+              <li><b>04</b> hubs</li>
+              <li>EN · 日本語</li>
+              <li>No build step</li>
+            </ul>
+          </div>
+          <div class="seal-slot" aria-hidden="true">
+            <svg class="seal" viewBox="0 0 200 200">
+              <defs>
+                <path id="seal-path" d="M100,100 m-82,0 a82,82 0 1,1 164,0 a82,82 0 1,1 -164,0"/>
+              </defs>
+              <circle class="draw" pathLength="1" cx="100" cy="100" r="97"/>
+              <circle class="draw late" pathLength="1" cx="100" cy="100" r="68"/>
+              <g class="ring">
+                <text><textPath href="#seal-path" textLength="512" lengthAdjust="spacing">CK · WORK · LIFE · ETC · MADE IN OSAKA · </textPath></text>
+              </g>
+              <circle class="dash" cx="100" cy="100" r="58"/>
+              <g class="leaf" transform="translate(76 76) scale(2)">
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      <!-- § 01 NAV -->
+      <section class="section" id="nav">
         <div class="wrap">
           <div class="section-head">
             <span class="stamp reveal">§ 01</span>
-            <h2 class="h-section reveal"><em>Applets</em>.</h2>
-            <p class="lede reveal">Everything runs on this page, except Orders, which reads Notion.</p>
+            <h2 class="h-section reveal"><em>Nav</em>.</h2>
           </div>
 
-          <div class="chips" role="group" aria-label="Filter applets">
-            <button class="badge-toggle active" type="button" data-filter="all">All</button>
-            <button class="badge-toggle" type="button" data-filter="general">General</button>
-            <button class="badge-toggle" type="button" data-filter="salesforce">Salesforce</button>
-            <button class="badge-toggle" type="button" data-filter="nihon">日本</button>
-            <button class="badge-toggle" type="button" data-filter="qr">QR</button>
-            <button class="badge-toggle" type="button" data-filter="themes">Themes</button>
-          </div>
-
-          <div class="applets">
-            <button class="applet reveal" style="--i:0" type="button" data-tool="change-case" data-cat="general">
-              <span class="applet-top"><span class="applet-glyph">Aa</span><span class="mono-tag">General</span></span>
-              <h3>Change Case</h3>
-              <p>Convert text between UPPERCASE, lowercase and Sentence case.</p>
-            </button>
-            <button class="applet reveal" style="--i:1" type="button" data-tool="kana-width-converter" data-cat="general">
-              <span class="applet-top"><span class="applet-glyph">あ</span><span class="mono-tag">General</span></span>
-              <h3>Kana Width</h3>
-              <p>Switch letters, numbers and kana between full-width and half-width.</p>
-            </button>
-            <button class="applet reveal" style="--i:2" type="button" data-tool="phone-formatter" data-cat="general">
-              <span class="applet-top"><span class="applet-glyph"><i data-lucide="phone"></i></span><span class="mono-tag">General</span></span>
-              <h3>Phone</h3>
-              <p>Format JP and PH numbers with country codes, hyphens or spaces.</p>
-            </button>
-            <a class="applet reveal" style="--i:3" href="/invoice" data-cat="general">
-              <span class="applet-top"><span class="applet-glyph">₱</span><span class="mono-tag">Notion</span></span>
-              <h3>Orders</h3>
-              <p>Turn a Notion invoice into an order image, a pack list or chat-ready text.</p>
+          <div class="applets hubs">
+            <a class="applet placeholder reveal" style="--i:0" href="/ukhub">
+              <span class="applet-top"><span class="applet-glyph">UK</span><span class="mono-tag">Placeholder</span></span>
+              <h3>UKHub</h3>
+              <p>Client work for the UK.</p>
             </a>
-            <button class="applet reveal" style="--i:4" type="button" data-tool="create-icons" data-cat="salesforce">
-              <span class="applet-top"><span class="applet-glyph"><i data-lucide="star"></i></span><span class="mono-tag">Salesforce</span></span>
-              <h3>Create Icons</h3>
-              <p>Paste an SVG, get tab and SLDS icons plus ready-to-paste snippets.</p>
-            </button>
-            <button class="applet reveal" style="--i:5" type="button" data-tool="social-insurance" data-cat="nihon">
-              <span class="applet-top"><span class="applet-glyph">社</span><span class="mono-tag">日本</span></span>
-              <h3>社会保険料計算</h3>
-              <p>Track April–June pay against your 標準報酬月額 bracket.</p>
-            </button>
-            <a class="applet reveal" style="--i:6" href="/qr" data-cat="qr">
-              <span class="applet-top"><span class="applet-glyph"><i data-lucide="qr-code"></i></span><span class="mono-tag">QR</span></span>
-              <h3>Photos</h3>
-              <p>The public page a QR scan lands on — no password, no nav.</p>
+            <a class="applet reveal" style="--i:1" href="/pasabuy">
+              <span class="applet-top"><span class="applet-glyph">₱</span><span class="mono-tag">1 tool</span></span>
+              <h3>Pasabuy</h3>
+              <p>Orders, pack lists and payment links from Notion.</p>
             </a>
-            <button class="applet reveal" style="--i:7" type="button" data-tool="themes" data-cat="themes">
-              <span class="applet-top"><span class="applet-glyph"><i data-lucide="palette"></i></span><span class="mono-tag">Themes</span></span>
-              <h3>Themes</h3>
-              <p>Preview the Sheen, Synchron and Salesforce palettes and copy them as CSS.</p>
+            <button class="applet reveal" style="--i:2" type="button" data-open-hub="devtools">
+              <span class="applet-top"><span class="applet-glyph">{}</span><span class="mono-tag">6 tools</span></span>
+              <h3>DevTools</h3>
+              <p>Text, phone numbers, Salesforce icons, 社会保険 and themes.</p>
             </button>
+            <a class="applet reveal" style="--i:3" href="/publicpages">
+              <span class="applet-top"><span class="applet-glyph"><i data-lucide="globe"></i></span><span class="mono-tag">2 pages</span></span>
+              <h3>PublicPages</h3>
+              <p>What anyone can open without the password.</p>
+            </a>
           </div>
         </div>
       </section>
@@ -214,7 +217,7 @@
             <div class="h-label reveal">About</div>
             <h2 class="h-section reveal">Made by <em>Sheen</em>.</h2>
             <p class="subtitle reveal">System engineer &amp; Salesforce administrator</p>
-            <p class="lede reveal">A computer science background and five-plus years across technical support, application management and full-stack work. These applets began as shortcuts for the day job — the small conversions and checks that sit between building a system and running a business on it.</p>
+            <p class="lede reveal">A computer science background and five-plus years across technical support, application management and full-stack work. These tools began as shortcuts for the day job — the small conversions and checks that sit between building a system and running a business on it.</p>
             <ul class="creds reveal">
               <li>Salesforce admin</li>
               <li>Apex · LWC · SOQL</li>
@@ -235,7 +238,7 @@
           <div class="faq">
             <details>
               <summary>Does anything I paste leave this page?<span class="plus" aria-hidden="true"></span></summary>
-              <p>No. The text, phone, icon, insurance and theme applets run entirely in your browser. Only Orders talks to a server, and only to read Notion.</p>
+              <p>No. Everything in DevTools runs entirely in your browser. Only Orders talks to a server, and only to read Notion.</p>
             </details>
             <details>
               <summary>Why is there a password?<span class="plus" aria-hidden="true"></span></summary>
@@ -273,15 +276,15 @@
       <footer class="site-foot">
         <div class="wrap">
           <div class="foot-top">
-            <a class="brand-mark" href="#applets" data-home-link>
+            <a class="brand-mark" href="#top" data-home-link>
               <i data-lucide="leaf"></i>
               <div>
-                <div class="brand-title">DevTools</div>
-                <div class="brand-sub">sheen.dev</div>
+                <div class="brand-title">ck</div>
+                <div class="brand-sub">work・life・etc</div>
               </div>
             </a>
             <ul class="foot-links">
-              <li><a href="#applets" data-home-link>Applets</a></li>
+              <li><a href="#nav" data-home-link>Nav</a></li>
               <li><a href="#workflow" data-home-link>Workflow</a></li>
               <li><a href="#stack" data-home-link>Stack</a></li>
               <li><a href="#about" data-home-link>About</a></li>
@@ -290,12 +293,66 @@
           </div>
           <p class="small-print">A private workbench by シン. Everything here sits behind the portal password except the QR photo page. Light or dark is remembered per device.</p>
           <div class="foot-bottom">
-            <span class="mono-tag">© 2026 sheen.dev</span>
+            <span class="mono-tag">© 2026 ck</span>
             <span class="mono-tag">Osaka · 大阪</span>
           </div>
         </div>
       </footer>
 
+    </div>
+
+    <!-- Hub View: DevTools -->
+    <div id="devtools-view" class="hub-view view-hidden">
+      <section class="section" id="devtools">
+        <div class="wrap">
+          <div class="section-head">
+            <button class="back-btn" type="button" data-back="home"><i data-lucide="arrow-left"></i> Nav</button>
+            <h2 class="h-section">Dev<em>Tools</em>.</h2>
+            <p class="lede">Everything here runs on this page; nothing is sent anywhere.</p>
+          </div>
+
+          <div class="chips" role="group" aria-label="Filter tools">
+            <button class="badge-toggle active" type="button" data-filter="all">All</button>
+            <button class="badge-toggle" type="button" data-filter="general">General</button>
+            <button class="badge-toggle" type="button" data-filter="salesforce">Salesforce</button>
+            <button class="badge-toggle" type="button" data-filter="nihon">日本</button>
+            <button class="badge-toggle" type="button" data-filter="themes">Themes</button>
+          </div>
+
+          <div class="applets">
+            <button class="applet" type="button" data-tool="change-case" data-cat="general">
+              <span class="applet-top"><span class="applet-glyph">Aa</span><span class="mono-tag">General</span></span>
+              <h3>Change Case</h3>
+              <p>Convert text between UPPERCASE, lowercase and Sentence case.</p>
+            </button>
+            <button class="applet" type="button" data-tool="kana-width-converter" data-cat="general">
+              <span class="applet-top"><span class="applet-glyph">あ</span><span class="mono-tag">General</span></span>
+              <h3>Kana Width</h3>
+              <p>Switch letters, numbers and kana between full-width and half-width.</p>
+            </button>
+            <button class="applet" type="button" data-tool="phone-formatter" data-cat="general">
+              <span class="applet-top"><span class="applet-glyph"><i data-lucide="phone"></i></span><span class="mono-tag">General</span></span>
+              <h3>Phone</h3>
+              <p>Format JP and PH numbers with country codes, hyphens or spaces.</p>
+            </button>
+            <button class="applet" type="button" data-tool="create-icons" data-cat="salesforce">
+              <span class="applet-top"><span class="applet-glyph"><i data-lucide="star"></i></span><span class="mono-tag">Salesforce</span></span>
+              <h3>Create Icons</h3>
+              <p>Paste an SVG, get tab and SLDS icons plus ready-to-paste snippets.</p>
+            </button>
+            <button class="applet" type="button" data-tool="social-insurance" data-cat="nihon">
+              <span class="applet-top"><span class="applet-glyph">社</span><span class="mono-tag">日本</span></span>
+              <h3>社会保険料計算</h3>
+              <p>Track April–June pay against your 標準報酬月額 bracket.</p>
+            </button>
+            <button class="applet" type="button" data-tool="themes" data-cat="themes">
+              <span class="applet-top"><span class="applet-glyph"><i data-lucide="palette"></i></span><span class="mono-tag">Themes</span></span>
+              <h3>Themes</h3>
+              <p>Preview the Sheen, Synchron and Salesforce palettes and copy them as CSS.</p>
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
 
     <!-- Tool View: Change Case -->
@@ -746,7 +803,7 @@
 
   </main>
 
-  <script src="script.js?v=13"></script>
-  <script src="home.js?v=2"></script>
+  <script src="script.js?v=14"></script>
+  <script src="home.js?v=3"></script>
 </body>
 </html>

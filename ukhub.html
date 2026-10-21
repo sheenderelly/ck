@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>UKHub — ck</title>
+  <script>
+    try { var t = localStorage.getItem('sheen-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="/style.css?v=11">
+  <link rel="stylesheet" href="/home.css?v=3">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@1.60.0/dist/umd/lucide.min.js"></script>
+</head>
+<body class="home">
+
+  <header class="site-nav" id="site-nav">
+    <div class="wrap nav-bar">
+      <a class="brand-mark" href="/">
+        <i data-lucide="leaf"></i>
+        <div>
+          <div class="brand-title">ck</div>
+          <div class="brand-sub">work・life・etc</div>
+        </div>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/ukhub" aria-current="page">UKHub</a></li>
+        <li><a href="/pasabuy">Pasabuy</a></li>
+        <li><a href="/#devtools">DevTools</a></li>
+        <li><a href="/publicpages">PublicPages</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div class="theme-switch" role="group" aria-label="Theme toggle">
+          <button id="theme-dark" class="active" type="button"><i data-lucide="moon"></i> Dark</button>
+          <button id="theme-light" type="button"><i data-lucide="sun"></i> Light</button>
+        </div>
+        <a class="btn btn-primary" href="/invoice">Orders</a>
+        <button class="btn btn-ghost menu-btn" id="menu-btn" type="button" aria-expanded="false" aria-controls="nav-drawer" aria-label="Menu"><i data-lucide="menu"></i></button>
+      </div>
+    </div>
+    <div class="wrap">
+      <nav class="nav-drawer" id="nav-drawer" aria-label="Hubs">
+        <a href="/ukhub" aria-current="page">UKHub</a>
+        <a href="/pasabuy">Pasabuy</a>
+        <a href="/#devtools">DevTools</a>
+        <a href="/publicpages">PublicPages</a>
+        <button class="btn btn-ghost theme-flip" type="button">Switch to light</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="hub-view">
+      <section class="section">
+        <div class="wrap">
+          <div class="section-head">
+            <a class="back-btn" href="/#nav"><i data-lucide="arrow-left"></i> Nav</a>
+            <h2 class="h-section reveal">UK<em>Hub</em>.</h2>
+            <p class="lede reveal">Client work for the UK.</p>
+          </div>
+          <div class="empty-slot reveal">
+            <span class="mono-tag">Placeholder</span>
+            <p>Nothing is built here yet. Tools for the UK client will live on this page.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="site-foot slim">
+      <div class="wrap">
+        <div class="foot-bottom">
+          <span class="mono-tag">© 2026 ck</span>
+          <span class="mono-tag">Osaka · 大阪</span>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <script src="/hub.js?v=1"></script>
+  <script src="/home.js?v=3"></script>
+</body>
+</html>

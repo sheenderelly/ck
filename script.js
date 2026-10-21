@@ -32,10 +32,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // DOM Elements - Menus
     const homeView = document.getElementById('home');
+    const devtoolsView = document.getElementById('devtools-view');
     const themesView = document.getElementById('themes-view');
-    // Every tool returns to the landing page
+    // A tool returns to whichever menu opened it (the landing or DevTools)
+    const menus = [homeView, devtoolsView].filter(Boolean);
     let currentMenu = homeView;
-    let homeScroll = 0;
+    const menuScroll = new Map();
 
     // Text Tool Views & Elements
     const changeCaseView = document.getElementById('change-case-view');
@@ -79,12 +81,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function showView(viewElement) {
         if (!viewElement) return;
 
-        // Remember where the landing page was, so Back lands on the same applet
-        const onHome = homeView && !homeView.classList.contains('view-hidden');
-        if (onHome && viewElement !== homeView) homeScroll = window.scrollY;
+        // Remember the menu being left and where it was scrolled to, so Back
+        // lands on the same card
+        const openMenu = menus.find(m => !m.classList.contains('view-hidden'));
+        if (openMenu && openMenu !== viewElement) {
+            menuScroll.set(openMenu, window.scrollY);
+            if (!menus.includes(viewElement)) currentMenu = openMenu;
+        }
 
         // Hide all views and menus
-        document.querySelectorAll('.home-view, .tools-menu, .tool-view').forEach(el => {
+        document.querySelectorAll('.home-view, .hub-view, .tools-menu, .tool-view').forEach(el => {
             el.classList.remove('view-active');
             el.classList.add('view-hidden');
         });
@@ -92,7 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Show target view
         viewElement.classList.remove('view-hidden');
         viewElement.classList.add('view-active');
-        window.scrollTo({ top: viewElement === homeView ? homeScroll : 0, behavior: 'instant' });
+        window.scrollTo({ top: menuScroll.get(viewElement) || 0, behavior: 'instant' });
+
+        // /#devtools reopens DevTools after a reload or from another page
+        if (viewElement === devtoolsView) history.replaceState(null, '', '#devtools');
+        else if (location.hash === '#devtools') history.replaceState(null, '', location.pathname);
     }
 
     // Section links bring the landing page back first when a tool is open;
@@ -103,9 +113,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Applet filter chips
-    const filterChips = document.querySelectorAll('.chips [data-filter]');
-    const applets = document.querySelectorAll('.applet');
+    // DevTools hub
+    document.querySelectorAll('[data-open-hub="devtools"]').forEach(el => {
+        el.addEventListener('click', () => showView(devtoolsView));
+    });
+    if (location.hash === '#devtools') showView(devtoolsView);
+    window.addEventListener('hashchange', () => {
+        if (location.hash === '#devtools') showView(devtoolsView);
+    });
+
+    // DevTools filter chips
+    const filterChips = document.querySelectorAll('#devtools-view .chips [data-filter]');
+    const applets = document.querySelectorAll('#devtools-view .applet');
     filterChips.forEach(chip => {
         chip.addEventListener('click', () => {
             filterChips.forEach(c => c.classList.toggle('active', c === chip));
@@ -167,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Universal Back Button logic
     backBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            showView(currentMenu);
+            showView(btn.dataset.back === 'home' ? homeView : currentMenu);
         });
     });
 
