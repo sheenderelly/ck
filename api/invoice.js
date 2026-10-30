@@ -159,38 +159,6 @@ export function toOrder(inv, lines, buyer, createdTime) {
   };
 }
 
-// Notion's API can filter a status by option name but not by group, so the
-// group members are read off the schema. Deriving them means renaming or
-// adding a status in Notion does not silently break the filter.
-export function completeOptionsFrom(database) {
-  const out = {};
-  for (const [name, prop] of Object.entries(database?.properties ?? {})) {
-    if (prop?.type !== "status") continue;
-    const group = (prop.status?.groups ?? []).find((g) => /^complete/i.test(g.name ?? ""));
-    if (!group) continue;
-    const ids = new Set(group.option_ids ?? []);
-    out[name] = (prop.status?.options ?? []).filter((o) => ids.has(o.id)).map((o) => o.name);
-  }
-  return out;
-}
-
-// Drops an invoice only once BOTH sides are done — paid AND handed over. One
-// side still open keeps it listed, because the order is not finished.
-//
-// Notion has no "not in group" filter, so each side becomes an AND of
-// does_not_equal over its completed options ("this side is still open"), and
-// the two sides are OR'd: open on either side is enough to list it. An invoice
-// with no status set is not complete, and does_not_equal keeps it.
-export function pendingFilter(complete) {
-  const sides = Object.entries(complete)
-    .map(([property, names]) => names.map((name) => ({ property, status: { does_not_equal: name } })))
-    .filter((clauses) => clauses.length)
-    .map((clauses) => (clauses.length === 1 ? clauses[0] : { and: clauses }));
-
-  if (!sides.length) return undefined;
-  return sides.length === 1 ? sides[0] : { or: sides };
-}
-
 // Resolves the buyer relations to client names in one pass. Each distinct
 // client is fetched once, however many invoices point at them, and a lookup
 // that fails costs that row its name rather than the whole list.
@@ -213,8 +181,7 @@ export async function buyerNames(rows, fetchPage) {
   return new Map(entries);
 }
 
-// Walks every page of a query, so a long back catalogue cannot push pending
-// invoices off the end of the first 100.
+// Walks every page of a query, so the list is not cut off at the first 100.
 async function queryAll(dbId, body, maxPages = 10) {
   const results = [];
   let cursor;
@@ -262,12 +229,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // The picker lists only invoices still open on both sides — anything the
-    // buyer has paid for and the seller has handed over is done with.
+    // The picker lists every invoice, newest first, whatever its status.
     if (url.searchParams.has("list")) {
-      const complete = completeOptionsFrom(await notion(`/databases/${INVOICES_DB}`));
       const results = await queryAll(INVOICES_DB, {
-        filter: pendingFilter(complete),
         sorts: [{ property: "invoice", direction: "descending" }],
       });
       const rows = results.map(props);

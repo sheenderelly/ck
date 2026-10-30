@@ -107,7 +107,7 @@
     </div>
     <div>
       <h2>Orders</h2>
-      <p class="hint">Open invoices only — anything not yet both paid and handed over. Pick one, then save the image and send it to the buyer.</p>
+      <p class="hint">Every invoice, newest first, whatever its status. Pick one, then save the image and send it to the buyer.</p>
     </div>
 
     <div class="filter-row">
@@ -440,7 +440,7 @@
     .then(function (body) {
       invoices = body.invoices || [];
       if (!invoices.length) {
-        listEl.innerHTML = '<p class="hint" style="padding:1rem;margin:0">Nothing open \u2014 every invoice is paid and handed over.</p>';
+        listEl.innerHTML = '<p class="hint" style="padding:1rem;margin:0">No invoices yet.</p>';
         return;
       }
       render();
