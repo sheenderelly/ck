@@ -605,8 +605,14 @@
   // ---- Item tags ------------------------------------------------------------
   // One row per unit, for sticking on each piece: customer | item | nth of qty.
   // An order of 2 Meiji Black for Danica is two rows, 1/2 and 2/2.
+  // The first name, skipping a title in front of it: "Ms. Arlene" is Arlene,
+  // not "Ms.". Only falls back to the first word when nothing else is left.
+  var TITLES = /^(mr|mrs|ms|miss|mx|dr|atty|engr|prof|sir|maam|ma'am|madam|mister|ate|kuya|tita|tito)$/i;
+
   function firstWord(name) {
-    return String(name == null ? "" : name).trim().split(/\s+/)[0] || "-";
+    var words = String(name == null ? "" : name).trim().split(/\s+/).filter(Boolean);
+    var pick = words.filter(function (w) { return !TITLES.test(w.replace(/[.,]+$/, "")); })[0];
+    return pick || words[0] || "-";
   }
 
   function tagRows(data) {
@@ -760,6 +766,7 @@
     drawLabel: drawLabel,
     drawTags: drawTags,
     tagRows: tagRows,
+    firstWord: firstWord,
     asReceipt: asReceipt,
     WIDTH: W,
   };
