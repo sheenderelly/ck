@@ -622,8 +622,9 @@
 
   var TAG_CUST_W = 140;
   var TAG_QTY_W = 84;
-  var TAG_FONT = 22;
-  var TAG_LINE = 28;
+  // One size and one weight throughout, matching the pack list's item text.
+  var TAG_FONT = 24;
+  var TAG_LINE = 30;
 
   function drawTags(canvas, data) {
     var rows = tagRows(data);
@@ -657,7 +658,7 @@
       var base = y + 10 + TAG_FONT;
 
       // Customer: shrink to fit rather than run into the next column.
-      var size = TAG_FONT + 2;
+      var size = TAG_FONT;
       ctx.font = font(size, 700);
       while (size > 12 && ctx.measureText(row.r.who).width > TAG_CUST_W - 16) {
         size--;
@@ -666,9 +667,9 @@
       text(ctx, row.r.who, edge + 8, base, { size: size, weight: 700, color: "#000" });
 
       row.lines.forEach(function (ln, n) {
-        text(ctx, ln, itemX + 8, base + n * TAG_LINE, { size: TAG_FONT, weight: 400, color: "#000" });
+        text(ctx, ln, itemX + 8, base + n * TAG_LINE, { size: TAG_FONT, weight: 700, color: "#000" });
       });
-      text(ctx, row.r.nth, LABEL_W - edge - 8, base, { size: TAG_FONT + 2, weight: 700, color: "#000", align: "right" });
+      text(ctx, row.r.nth, LABEL_W - edge - 8, base, { size: TAG_FONT, weight: 700, color: "#000", align: "right" });
 
       y += row.h;
       if (i < laid.length - 1) ctx.fillRect(edge, y - 1, LABEL_W - edge * 2, 2);
