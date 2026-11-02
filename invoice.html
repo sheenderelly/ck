@@ -421,6 +421,68 @@
         lab.appendChild(rHead);
         lab.appendChild(rPre);
         stageEl.appendChild(lab);
+
+        // One row per unit — customer | item | nth of qty — for tagging each
+        // piece. Same 3-inch width as the pack list.
+        var tags = document.createElement('div');
+        tags.className = 'text-block';
+
+        var tagsHead = document.createElement('div');
+        tagsHead.className = 'text-head';
+        var tagsLabel = document.createElement('span');
+        tagsLabel.className = 'hint';
+        tagsLabel.textContent = 'Item tags (3-inch thermal)';
+        tagsHead.appendChild(tagsLabel);
+        tags.appendChild(tagsHead);
+
+        var tagsCanvas = document.createElement('canvas');
+        tagsCanvas.className = 'label-canvas';
+        tagsCanvas.setAttribute('role', 'img');
+        tagsCanvas.setAttribute('aria-label', 'Item tags for ' + number);
+        tags.appendChild(tagsCanvas);
+        OrderDraw.drawTags(tagsCanvas, data);
+
+        var tagsActions = document.createElement('div');
+        tagsActions.className = 'actions';
+
+        var tagsSave = document.createElement('a');
+        tagsSave.className = 'btn btn-primary';
+        tagsSave.textContent = 'Save tags';
+        tagsSave.href = '#';
+        tagsSave.addEventListener('click', function (e) {
+          e.preventDefault();
+          tagsCanvas.toBlob(function (blob) {
+            if (blobUrl) URL.revokeObjectURL(blobUrl);
+            blobUrl = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = number + '-tags.png';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }, 'image/png');
+        });
+        tagsActions.appendChild(tagsSave);
+
+        var tagsCopy = document.createElement('button');
+        tagsCopy.className = 'btn btn-secondary';
+        tagsCopy.type = 'button';
+        tagsCopy.textContent = 'Copy tags';
+        tagsCopy.addEventListener('click', function () {
+          tagsCanvas.toBlob(function (blob) {
+            if (!navigator.clipboard || !window.ClipboardItem) {
+              tagsCopy.textContent = 'Not supported';
+              return;
+            }
+            navigator.clipboard
+              .write([new ClipboardItem({ 'image/png': blob })])
+              .then(function () { tagsCopy.textContent = 'Copied'; })
+              .catch(function () { tagsCopy.textContent = 'Copy failed'; });
+          }, 'image/png');
+        });
+        tagsActions.appendChild(tagsCopy);
+        tags.appendChild(tagsActions);
+        stageEl.appendChild(tags);
       })
       .catch(function (err) {
         if (current !== number) return;

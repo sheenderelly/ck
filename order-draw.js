@@ -552,6 +552,20 @@
     return { steps: steps, height: y + LABEL_PAD };
   }
 
+  // Thermal heads only print black or nothing. Anything grey is dithered into
+  // speckle, which is what makes small text look rough, so settle every pixel
+  // to one or the other.
+  function blackAndWhite(ctx, w, h) {
+    var img = ctx.getImageData(0, 0, w, h);
+    var d = img.data;
+    for (var i = 0; i < d.length; i += 4) {
+      var v = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114 < 150 ? 0 : 255;
+      d[i] = d[i + 1] = d[i + 2] = v;
+      d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
   function drawLabel(canvas, data) {
     data = visible(data);
     var plan = labelSteps(scratch(), data);
@@ -584,17 +598,91 @@
       }
     });
 
-    // Thermal heads only print black or nothing. Anything grey is dithered into
-    // speckle, which is what makes small text look rough, so settle every pixel
-    // to one or the other here.
-    var img = ctx.getImageData(0, 0, LABEL_W, plan.height);
-    var d = img.data;
-    for (var i = 0; i < d.length; i += 4) {
-      var v = d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114 < 150 ? 0 : 255;
-      d[i] = d[i + 1] = d[i + 2] = v;
-      d[i + 3] = 255;
-    }
-    ctx.putImageData(img, 0, 0);
+    blackAndWhite(ctx, LABEL_W, plan.height);
+    return canvas;
+  }
+
+  // ---- Item tags ------------------------------------------------------------
+  // One row per unit, for sticking on each piece: customer | item | nth of qty.
+  // An order of 2 Meiji Black for Danica is two rows, 1/2 and 2/2.
+  function firstWord(name) {
+    return String(name == null ? "" : name).trim().split(/\s+/)[0] || "-";
+  }
+
+  function tagRows(data) {
+    var who = firstWord(data.buyer);
+    var rows = [];
+    packLines(data).forEach(function (l) {
+      var name = String(l["product name"] == null ? "" : l["product name"]).trim();
+      var qty = Math.max(1, Math.round(num(l.qty)) || 1);
+      for (var n = 1; n <= qty; n++) rows.push({ who: who, item: name, nth: n + "/" + qty });
+    });
+    return rows;
+  }
+
+  var TAG_CUST_W = 140;
+  var TAG_QTY_W = 84;
+  var TAG_FONT = 22;
+  var TAG_LINE = 28;
+
+  function drawTags(canvas, data) {
+    var rows = tagRows(data);
+    var m = scratch();
+    var edge = 3;
+    var itemX = edge + TAG_CUST_W;
+    var itemW = LABEL_W - edge * 2 - TAG_CUST_W - TAG_QTY_W - 16;
+
+    // Measure every row first so the paper is cut to the exact height.
+    m.font = font(TAG_FONT, 700);
+    var laid = rows.map(function (r) {
+      var lines = wrapFull(m, r.item, itemW).slice(0, 6);
+      return { r: r, lines: lines, h: Math.max(lines.length * TAG_LINE, TAG_LINE) + 20 };
+    });
+    var total = laid.reduce(function (sum, row) { return sum + row.h; }, 0);
+    var height = Math.max(total, 40) + edge * 2;
+
+    canvas.width = LABEL_W;
+    canvas.height = height;
+    canvas.style.width = LABEL_W + "px";
+    canvas.style.maxWidth = "100%";
+    canvas.style.height = "auto";
+
+    var ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, LABEL_W, height);
+    ctx.fillStyle = "#000";
+
+    var y = edge;
+    laid.forEach(function (row, i) {
+      var base = y + 10 + TAG_FONT;
+
+      // Customer: shrink to fit rather than run into the next column.
+      var size = TAG_FONT + 2;
+      ctx.font = font(size, 700);
+      while (size > 12 && ctx.measureText(row.r.who).width > TAG_CUST_W - 16) {
+        size--;
+        ctx.font = font(size, 700);
+      }
+      text(ctx, row.r.who, edge + 8, base, { size: size, weight: 700, color: "#000" });
+
+      row.lines.forEach(function (ln, n) {
+        text(ctx, ln, itemX + 8, base + n * TAG_LINE, { size: TAG_FONT, weight: 400, color: "#000" });
+      });
+      text(ctx, row.r.nth, LABEL_W - edge - 8, base, { size: TAG_FONT + 2, weight: 700, color: "#000", align: "right" });
+
+      y += row.h;
+      if (i < laid.length - 1) ctx.fillRect(edge, y - 1, LABEL_W - edge * 2, 2);
+    });
+
+    // The frame and the two column dividers.
+    ctx.fillRect(0, 0, LABEL_W, edge);
+    ctx.fillRect(0, height - edge, LABEL_W, edge);
+    ctx.fillRect(0, 0, edge, height);
+    ctx.fillRect(LABEL_W - edge, 0, edge, height);
+    ctx.fillRect(itemX - 1, edge, 2, height - edge * 2);
+    ctx.fillRect(LABEL_W - edge - TAG_QTY_W, edge, 2, height - edge * 2);
+
+    blackAndWhite(ctx, LABEL_W, height);
     return canvas;
   }
 
@@ -669,6 +757,8 @@
     asText: asText,
     phoneFmt: phoneFmt,
     drawLabel: drawLabel,
+    drawTags: drawTags,
+    tagRows: tagRows,
     asReceipt: asReceipt,
     WIDTH: W,
   };
